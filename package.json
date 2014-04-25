@@ -1,0 +1,18 @@
+{
+  "author"               : "Jeffrey van Harn <jeffrey.wizkid@gmail.com>",
+  "name"                 : "typed-panels",
+  "description"          : "UI Framework that starts to think at the interface and ends at the models.",
+  "version"              : "0.0.1",
+  "repository"           : {
+    "type"               : "git",
+    "url"                : "git@github.com:jvanharn/typed-panels.git"
+  },
+  "engines"              : {
+    "node"               : "0.8.x - 0.10.x"
+  },
+  "main"                 : "dist/typed.js",
+  "dependencies"         : {
+    "lodash"             : ">=2.4.1",
+    "underscore.string"  : ">=1.9"
+  }
+}

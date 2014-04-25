@@ -1,0 +1,23 @@
+{
+  "name": "typed-panels",
+  "version": "0.0.1",
+  "authors": [ "Jeffrey van Harn <jeffrey.wizkid@gmail.com>" ],
+  "description": "UI Framework based on TypeScript that begins at the user interface and ends at the models.",
+  "main": "dist/typed.js",
+  "license": "MIT",
+  "homepage": "https://github.com/jvanharn/typed-panels",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "public",
+    "tests",
+	"samples",
+	"libraries"
+  ],
+  "dependencies": {
+    "jquery": ">=1.9",
+    "lodash": ">=2.4.1",
+  },
+}

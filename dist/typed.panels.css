@@ -1,0 +1,41 @@
+.view-panel {
+	position: absolute;
+	left: 0;
+	right:0;
+	top: 0;
+	bottom: 0;
+}
+
+.view-panel-group {
+	position: absolute;
+}
+
+.view-panel-group > .view-panel { overflow: hidden; }
+
+.panel-wrapper {
+	position: relative;
+	min-height: 300px;
+	height: 100%;
+}
+
+.tiling-viewport-horizontal, .tiling-viewport-vertical {
+    position: absolute;
+    overflow: hidden;
+    left: 0;
+	right:0;
+	top: 0;
+	bottom: 0;
+}
+.tiling-viewport-horizontal .panel, .tiling-viewport-vertical .panel {
+    width: 100%;
+    height: 100%;
+    /* Keep the percentage units there, this fixes bugs with css animations in webkit based browsers. */
+    left: 0%;
+    right: 0%;
+    top: 0%;
+    bottom: 0%;
+}
+
+.debug-panels .view-panel { outline: 1px solid red; outline-offset: -1px; }
+.debug-panels .view-panel-group { outline: 1px solid green; outline-offset: 0px; }
+.debug-panels .panel-wrapper { outline: 2px solid blue; outline-offset: 1px; }
