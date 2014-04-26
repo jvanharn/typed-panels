@@ -24,7 +24,7 @@ This is also the idea behind this framework;
 [Learn More](https://github.com/jvanharn/typed-panels/wiki/Layout-First-Approach)
 
 ## Examples
-Here are the four absolute basic components neede to build an Web Application with Typed Panels. Check out our [other samples](https://github.com/jvanharn/typed-panels/tree/master/samples) to get a better understanding of the power of the LINQ bindings, more advanced models, automnatically compositing UI Grids, Animations with Viewport Managers, etc.
+Here are the four absolute basic components neede to build an Web Application with Typed Panels. Check out our [other samples](https://github.com/jvanharn/typed-panels/tree/master/samples) to get a better understanding of the power of the LINQ bindings, more advanced models, automatically compositing UI Grids, Animations with Viewport Managers, etc.
 ### Super simple (view)models
 Using the strength of TypeScript models are super easy to setup and above all use. A model can be as simple as the example below;
 ```javascript
@@ -56,7 +56,7 @@ class BookPanel extends Panels.ModelPanel<BookModel> {
 ```
 
 ### Familiar views
-Using any client side Templating language/library you can display the data in your model. In this example the book get's displayed in a jumbotron from Bootstrap using the (default) Underscore/Lodash templates.
+Using any client side Templating language/library you can display the data in your model. In this example the book get's displayed in a [jumbotron from Bootstrap](http://getbootstrap.com/components/#jumbotron) using the (default) [Underscore/Lodash templates](http://underscorejs.org/#template).
 ```html
 <div class="container-fluid">
 	<div class="jumbotron">
