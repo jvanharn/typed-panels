@@ -3,6 +3,13 @@
 Typed Panels is a Javascript framework written entirely in [TypeScript](http://www.typescriptlang.org/) which tries to make you look at an web application in an entirely different way. It focusses on atomic functionality in your interface and let's you group, reuse and shuffle it all over the UI without you as a developer only ever having to worry about where to put it, and not how to put it somewhere.
 *[Check out the Wiki](https://github.com/jvanharn/typed-panels/wiki)*
 
+## Download
+Download the latest versions from the [dist/](https://github.com/jvanharn/typed-panels/tree/master/dist) directory or download the point releases here:
+ * **Latest Stable**: N/A
+ * **Latest Testing**: [v0.0.1-alpha.zip](https://github.com/jvanharn/typed-panels/releases/tag/v0.0.1-alpha)
+ * **Master Branch**: [master.zip](https://github.com/jvanharn/typed-panels/archive/master.zip)
+
+
 ## Should I use it?
 You should consider this framework when you're:
  * Creating a (Rich) Web Application
