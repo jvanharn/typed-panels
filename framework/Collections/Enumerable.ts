@@ -16,11 +16,16 @@ module Collections {
 
 	export class SimpleEnumerator<T> implements IEnumerator<T> {
 		Index: number = 0;
+		private Items: T[];
 		get Current(): T {
 			return this.Items[this.Index];
 		}
 		
-		constructor(private Items: T[]) { }
+		constructor(items: T[]) {
+			if(items == undefined || items == null)
+				throw new InvalidArgumentException();
+			this.Items = items;
+		}
 		
 		public MoveNext(): boolean {
 			if(!this.HasNext())
@@ -34,7 +39,7 @@ module Collections {
 		}
 		
 		public IsValid(): boolean {
-			return (this.Index <= this.Items.length);
+			return (this.Index < this.Items.length);
 		}
 		
 		public Reset(): void {

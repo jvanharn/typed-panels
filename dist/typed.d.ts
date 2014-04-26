@@ -74,6 +74,9 @@ declare class Exception implements Error {
     public name: string;
     public message: string;
     constructor(message?: string);
+    static IgnoreOrDefault<T>(obj: any, callback: Function, def: T, ...args: any[]): T;
+    static IgnoreAll(obj: any, callback: Function, ...args: any[]): void;
+    static Ignore(callback: () => void): void;
 }
 declare class RuntimeException extends Exception {
     public name: string;
@@ -100,9 +103,19 @@ declare class NullReferenceException extends RuntimeException {
 }
 declare class KeyNotFoundException extends RuntimeException {
     public name: string;
+    public message: string;
 }
 declare class IndexOutOfBoundsException extends RuntimeException {
     public name: string;
+    public message: string;
+}
+declare class DuplicateKeyException extends RuntimeException {
+    public name: string;
+    public message: string;
+}
+declare class InvalidArgumentException extends RuntimeException {
+    public name: string;
+    public message: string;
 }
 declare class Guid extends BaseObject {
     private _guid;
@@ -135,10 +148,10 @@ declare module Collections {
         HasNext(): boolean;
     }
     class SimpleEnumerator<T> implements IEnumerator<T> {
-        private Items;
         public Index: number;
+        private Items;
         public Current : T;
-        constructor(Items: T[]);
+        constructor(items: T[]);
         public MoveNext(): boolean;
         public HasNext(): boolean;
         public IsValid(): boolean;
@@ -332,7 +345,7 @@ declare module Collections {
         Insert(index: number, item: T): void;
         InsertRange(index: number, collection: IEnumerable<T>): void;
         RemoveAt(index: number): void;
-        RemoveRange(indexStart: number, indexEnd: number): void;
+        RemoveRange(index: number, count: number): void;
     }
     /**
     * Real standalone list implementation.
@@ -343,7 +356,6 @@ declare module Collections {
         public Add(item: T): void;
         public AddRange(collection: IEnumerable<T>): void;
         public Remove(item: T): void;
-        public RemoveRange(indexStart: number, indexEnd: number): void;
         public Clear(): void;
         public Contains(item: T): boolean;
         public IndexOf(item: T): number;
@@ -351,6 +363,7 @@ declare module Collections {
         public Insert(index: number, item: T): void;
         public InsertRange(index: number, collection: IEnumerable<T>): void;
         public RemoveAt(index: number): void;
+        public RemoveRange(index: number, count: number): void;
         public CopyTo(collection: ICollection<T>): void;
         public GetEnumerator(): IEnumerator<T>;
         /**
@@ -365,10 +378,10 @@ declare module Collections {
         private _makeGap(gapStart, gapLength);
     }
     class ListEnumerator<T> implements IEnumerator<T> {
-        private List;
         public Index: number;
+        private List;
         public Current : T;
-        constructor(List: List<T>);
+        constructor(list: List<T>);
         public MoveNext(): boolean;
         public HasNext(): boolean;
         public IsValid(): boolean;
@@ -386,7 +399,7 @@ declare module Collections {
         public Add(item: T): void;
         public AddRange(collection: IEnumerable<T>): void;
         public Remove(item: T): void;
-        public RemoveRange(indexStart: number, indexEnd: number): void;
+        public RemoveRange(index: number, count: number): void;
         public Clear(): void;
         public Contains(item: T): boolean;
         public IndexOf(item: T): number;
@@ -475,17 +488,16 @@ declare module Collections {
     class DictionaryEnumerator<TKey, TValue> extends BaseDictionaryEnumerator<TKey, TValue> {
         private Items;
         public Current : KeyValuePair<TKey, TValue>;
-        constructor(Items: KeyValuePair<TKey, TValue>[]);
-        public s: any;
+        constructor(items: KeyValuePair<TKey, TValue>[]);
         public HasNext(): boolean;
         public IsValid(): boolean;
         public RefreshCurrent(): void;
     }
     class SearchDictionaryEnumerator<TValue> extends BaseDictionaryEnumerator<string, TValue> {
-        private Items;
         private Keys;
+        private Items;
         public Current : KeyValuePair<string, TValue>;
-        constructor(Items: {
+        constructor(items: {
             [name: string]: TValue;
         });
         public HasNext(): boolean;

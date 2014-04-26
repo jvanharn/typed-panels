@@ -421,6 +421,8 @@ module Collections {
 		
 		public static EnumerateToArray<TValue>(e: IEnumerator<TValue>): TValue[] {
 		    var r: TValue[] = [];
+			if(!e.IsValid())
+				return r;
 		    do {
                 r.push(e.Current);
 		    } while(e.MoveNext());

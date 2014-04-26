@@ -46,6 +46,7 @@ class BaseObject {
             return new ObjectType(<ConstructorPrototype> (<any> this).__proto__.constructor);
         }catch(e){
             console.warn('This browser does not support dynamic prototype retrieval.');
+            return undefined;
         }
     }
 }

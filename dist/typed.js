@@ -34,6 +34,7 @@ var BaseObject = (function () {
             return new ObjectType(this.__proto__.constructor);
         } catch (e) {
             console.warn('This browser does not support dynamic prototype retrieval.');
+            return undefined;
         }
     };
     return BaseObject;
@@ -114,6 +115,37 @@ var Exception = (function () {
         if (message !== undefined)
             this.message = message;
     }
+    Exception.IgnoreOrDefault = function (obj, callback, def) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 3); _i++) {
+            args[_i] = arguments[_i + 3];
+        }
+        try  {
+            var args = [].concat(arguments).splice(2);
+            return callback.apply(obj, args);
+        } catch (e) {
+            return def;
+        }
+    };
+
+    Exception.IgnoreAll = function (obj, callback) {
+        var args = [];
+        for (var _i = 0; _i < (arguments.length - 2); _i++) {
+            args[_i] = arguments[_i + 2];
+        }
+        try  {
+            var args = [].concat(arguments).splice(2);
+            callback.apply(obj, args);
+        } catch (e) {
+        }
+    };
+
+    Exception.Ignore = function (callback) {
+        try  {
+            callback();
+        } catch (e) {
+        }
+    };
     return Exception;
 })();
 Exception.prototype = Error;
@@ -126,7 +158,7 @@ var RuntimeException = (function (_super) {
         this.message = 'No message given.';
     }
     RuntimeException.prototype.toString = function () {
-        return 'Exception "' + this.name + '" ocurred with message; ' + this.message;
+        return 'Exception "' + this.name + '" occurred with message; ' + this.message;
     };
     return RuntimeException;
 })(Exception);
@@ -180,6 +212,7 @@ var KeyNotFoundException = (function (_super) {
     function KeyNotFoundException() {
         _super.apply(this, arguments);
         this.name = 'KeyNotFoundException';
+        this.message = 'The key you gave was not found in this collection.';
     }
     return KeyNotFoundException;
 })(RuntimeException);
@@ -188,8 +221,28 @@ var IndexOutOfBoundsException = (function (_super) {
     function IndexOutOfBoundsException() {
         _super.apply(this, arguments);
         this.name = 'IndexOutOfBoundsException';
+        this.message = 'The index given was less than 0 or larger than the length of this collection.';
     }
     return IndexOutOfBoundsException;
+})(RuntimeException);
+var DuplicateKeyException = (function (_super) {
+    __extends(DuplicateKeyException, _super);
+    function DuplicateKeyException() {
+        _super.apply(this, arguments);
+        this.name = 'DuplicateKeyException';
+        this.message = 'The key you wanted to add already exists on this collection.';
+    }
+    return DuplicateKeyException;
+})(RuntimeException);
+
+var InvalidArgumentException = (function (_super) {
+    __extends(InvalidArgumentException, _super);
+    function InvalidArgumentException() {
+        _super.apply(this, arguments);
+        this.name = 'InvalidArgumentException';
+        this.message = 'The argument given to this method was invalid.';
+    }
+    return InvalidArgumentException;
 })(RuntimeException);
 var Guid = (function (_super) {
     __extends(Guid, _super);
@@ -271,9 +324,11 @@ var TemplateFactory = (function () {
 var Collections;
 (function (Collections) {
     var SimpleEnumerator = (function () {
-        function SimpleEnumerator(Items) {
-            this.Items = Items;
+        function SimpleEnumerator(items) {
             this.Index = 0;
+            if (items == undefined || items == null)
+                throw new InvalidArgumentException();
+            this.Items = items;
         }
         Object.defineProperty(SimpleEnumerator.prototype, "Current", {
             get: function () {
@@ -295,7 +350,7 @@ var Collections;
         };
 
         SimpleEnumerator.prototype.IsValid = function () {
-            return (this.Index <= this.Items.length);
+            return (this.Index < this.Items.length);
         };
 
         SimpleEnumerator.prototype.Reset = function () {
@@ -648,6 +703,8 @@ var Collections;
 
         Enumerable.EnumerateToArray = function (e) {
             var r = [];
+            if (!e.IsValid())
+                return r;
             do {
                 r.push(e.Current);
             } while(e.MoveNext());
@@ -771,22 +828,14 @@ var Collections;
     })(BaseObject);
     Collections.Pentuple = Pentuple;
 })(Collections || (Collections = {}));
-// Makes it possibe to get an enumerator for an array by modifying its prototype
-// This does make the framework incompatible with many other prototype modifying libs so, I have implemented an alternative.
-// This is known to be incompatible with exotic Linq in Javascript libraries
-/*interface Array<T> extends Collections.IEnumerable<T> {
-//GetEnumerator(o: T): Array<T>;
-GetEnumerator(): Collections.IEnumerator<T>;
-}
-Array.prototype.GetEnumerator = function() {
-return new Collections.SimpleEnumerator(this);
-}*/
 var Collections;
 (function (Collections) {
     var ArrayHelper = (function () {
         function ArrayHelper() {
         }
         ArrayHelper.GetEnumerator = function (arr) {
+            if (arr == undefined)
+                throw new InvalidArgumentException();
             return new Collections.SimpleEnumerator(arr);
         };
         return ArrayHelper;
@@ -813,11 +862,15 @@ var Collections;
         });
 
         List.prototype.Add = function (item) {
+            if (item === undefined)
+                throw new InvalidArgumentException();
             this[this._length] = item;
             this._length++;
         };
 
         List.prototype.AddRange = function (collection) {
+            if (collection === undefined)
+                throw new InvalidArgumentException();
             var e = collection.GetEnumerator();
             if (e.Current != undefined)
                 do {
@@ -826,6 +879,8 @@ var Collections;
         };
 
         List.prototype.Remove = function (item) {
+            if (item === undefined)
+                throw new InvalidArgumentException();
             var minus = 0;
             for (var i = 0; i < this._length; i++) {
                 if (item == this[i]) {
@@ -833,18 +888,11 @@ var Collections;
                     minus++;
                 }
             }
-            this._fixIndex();
-            this._length -= minus;
-        };
-
-        List.prototype.RemoveRange = function (indexStart, indexEnd) {
-            var minus = 0;
-            for (var i = indexStart; i < indexEnd; i++) {
-                delete this[i];
-                minus++;
-            }
-            this._fixIndex();
-            this._length -= minus;
+            if (minus > 0) {
+                this._fixIndex();
+                //this._length -= minus;
+            } else
+                throw new KeyNotFoundException();
         };
 
         List.prototype.Clear = function () {
@@ -863,25 +911,39 @@ var Collections;
         };
 
         List.prototype.IndexOf = function (item) {
+            if (item === undefined)
+                throw new InvalidArgumentException();
             for (var i = 0; i < this._length; i++) {
                 if (item == this[i])
                     return i;
             }
-            return i;
+            return -1;
         };
 
         List.prototype.ElementAt = function (index) {
+            if (index === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index >= this._length)
+                throw new IndexOutOfBoundsException();
             return this[index];
         };
 
         List.prototype.Insert = function (index, item) {
-            if (index >= this._length)
-                throw new Error('Out of range exception.');
+            if (index === undefined || item === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index > this._length)
+                throw new IndexOutOfBoundsException();
+
             this._makeGap(index, 1);
             this[index] = item;
         };
 
         List.prototype.InsertRange = function (index, collection) {
+            if (index === undefined || collection == undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index > this._length)
+                throw new IndexOutOfBoundsException();
+
             var elements = Collections.Enumerable.CopyToArray(collection);
             this._makeGap(index, elements.length);
             for (var i = 0; i < elements.length; i++) {
@@ -890,9 +952,25 @@ var Collections;
         };
 
         List.prototype.RemoveAt = function (index) {
-            if (index >= this._length)
-                throw new Error('Out of range exception.');
+            if (index === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index >= this._length)
+                throw new IndexOutOfBoundsException();
+
             delete this[index];
+            this._fixIndex();
+        };
+
+        List.prototype.RemoveRange = function (index, count) {
+            if (index === undefined || count === undefined)
+                throw new InvalidArgumentException();
+            if ((index < 0 || index >= this._length) || (count < 0 || count > (this._length - index)))
+                throw new IndexOutOfBoundsException();
+
+            for (var i = 0; i < count; i++)
+                delete this[index + i];
+
+            this._fixIndex();
         };
 
         List.prototype.CopyTo = function (collection) {
@@ -918,28 +996,43 @@ var Collections;
         List.prototype._fixIndex = function () {
             var removed = 0;
             var removalStart = -1;
-            for (var i = 0; i < this._length; i++) {
-                if (this[i] == undefined && this[i + 1] == undefined) {
+            var total = this._length;
+            for (var i = 0; i < total; i++) {
+                if (this[i] === undefined && this[i + 1] === undefined) {
                     if (removalStart >= 0)
                         continue;
                     else
                         removalStart = i;
-                } else if (removalStart >= 0 && this[i] != undefined) {
-                    this._removeGap(removalStart, (i - 1));
+                } else if (removalStart >= 0 && this[i] !== undefined) {
+                    var rem = this._removeGap(removalStart, (i - 1));
+                    removed += rem;
+                    total -= rem;
                     removalStart = -1;
-                    removed += (i - 1) - removalStart;
-                } else if (this[i] == undefined) {
-                    this._removeGap(i, i + 1);
-                    removed += 1;
+                } else if (removalStart == -1 && this[i] === undefined) {
+                    var rem = this._removeGap(i, i);
+                    total -= rem;
+                    removed += rem;
                 }
             }
+            if (removalStart > -1)
+                removed += this._length - removalStart;
             this._length -= removed;
         };
 
         List.prototype._removeGap = function (gapStart, gapEnd) {
-            for (var i = 0; i < (gapEnd - gapStart); i++) {
-                this[gapStart + i] = this[gapEnd + i];
+            // fill gap
+            var gapSize = (gapEnd - gapStart) + 1;
+            var gapPos = 1;
+            for (var i = gapStart; i < this._length; i++) {
+                this[i] = this[gapEnd + gapPos];
+                gapPos++;
             }
+
+            for (var r = this._length - gapSize; r < this._length; r++) {
+                delete this[r];
+            }
+
+            return gapSize;
         };
 
         List.prototype._makeGap = function (gapStart, gapLength) {
@@ -960,9 +1053,11 @@ var Collections;
     Collections.List = List;
 
     var ListEnumerator = (function () {
-        function ListEnumerator(List) {
-            this.List = List;
+        function ListEnumerator(list) {
             this.Index = 0;
+            if (list == undefined || list == null)
+                throw new InvalidArgumentException();
+            this.List = list;
         }
         Object.defineProperty(ListEnumerator.prototype, "Current", {
             get: function () {
@@ -984,7 +1079,7 @@ var Collections;
         };
 
         ListEnumerator.prototype.IsValid = function () {
-            return (this.Index <= this.List.Count);
+            return (this.Index < this.List.Count);
         };
 
         ListEnumerator.prototype.Reset = function () {
@@ -1015,22 +1110,37 @@ var Collections;
         });
 
         ArrayList.prototype.Add = function (item) {
-            this.Items[this.Items.length] = item;
+            if (item === undefined)
+                throw new InvalidArgumentException();
+            this.Items.push(item);
         };
 
         ArrayList.prototype.AddRange = function (collection) {
-            this.Items.concat(Collections.Enumerable.CopyToArray(collection));
+            if (collection === undefined)
+                throw new InvalidArgumentException();
+            this.Items = this.Items.concat(Collections.Enumerable.CopyToArray(collection));
         };
 
         ArrayList.prototype.Remove = function (item) {
+            if (item === undefined)
+                throw new InvalidArgumentException();
+            var removed = false;
             for (var i = 0; i < this.Items.length; i++) {
-                if (item == this.Items[i])
+                if (item == this.Items[i]) {
                     this.Items.splice(i, 1);
+                    removed = true;
+                }
             }
+            if (!removed)
+                throw new KeyNotFoundException();
         };
 
-        ArrayList.prototype.RemoveRange = function (indexStart, indexEnd) {
-            this.Items.splice(indexStart, indexEnd - indexStart);
+        ArrayList.prototype.RemoveRange = function (index, count) {
+            if (index === undefined || count === undefined)
+                throw new InvalidArgumentException();
+            if ((index < 0 || index >= this.Items.length) || (count < 0 || count > (this.Items.length - index)))
+                throw new IndexOutOfBoundsException();
+            this.Items.splice(index, count);
         };
 
         ArrayList.prototype.Clear = function () {
@@ -1038,40 +1148,51 @@ var Collections;
         };
 
         ArrayList.prototype.Contains = function (item) {
-            for (var i = 0; i < this.Items.length; i++) {
-                if (item == this.Items[i])
-                    return true;
-            }
-            return false;
+            return (this.Items.indexOf(item) >= 0);
         };
 
         ArrayList.prototype.IndexOf = function (item) {
-            for (var i = 0; i < this.Items.length; i++) {
-                if (item == this.Items[i])
-                    return i;
-            }
-            return i;
+            if (item === undefined)
+                throw new InvalidArgumentException();
+
+            return this.Items.indexOf(item);
         };
 
         ArrayList.prototype.ElementAt = function (index) {
+            if (index === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index >= this.Items.length)
+                throw new IndexOutOfBoundsException();
+
             return this.Items[index];
         };
 
         ArrayList.prototype.Insert = function (index, item) {
-            if (index >= this.Items.length)
-                throw new Error('Out of range exception.');
+            if (index === undefined || item === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index > this.Items.length)
+                throw new IndexOutOfBoundsException();
+
             this.Items.splice(index, 0, item);
         };
 
         ArrayList.prototype.InsertRange = function (index, collection) {
+            if (index === undefined || collection == undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index > this.Items.length)
+                throw new IndexOutOfBoundsException();
+
             var sliceAfter = this.Items.slice(index);
             var sliceBefore = this.Items;
             this.Items = sliceBefore.concat(Collections.Enumerable.CopyToArray(collection)).concat(sliceAfter);
         };
 
         ArrayList.prototype.RemoveAt = function (index) {
-            if (index >= this.Items.length)
-                throw new Error('Out of range exception.');
+            if (index === undefined)
+                throw new InvalidArgumentException();
+            if (index < 0 || index >= this.Items.length)
+                throw new IndexOutOfBoundsException();
+
             this.Items.splice(index, 1);
         };
 
@@ -1161,7 +1282,13 @@ var Collections;
         };
 
         Dictionary.prototype.Add = function (item) {
-            this.Items[this.Items.length] = item;
+            if (item === undefined)
+                throw new InvalidArgumentException();
+            if (item == null) {
+                this.Items.push(new KeyValuePair(null, null));
+                console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
+            } else
+                this.Items.push(item);
         };
 
         Dictionary.prototype.GetKey = function (value) {
@@ -1195,17 +1322,26 @@ var Collections;
         };
 
         Dictionary.prototype.Remove = function (obj) {
+            if (obj === undefined)
+                throw new InvalidArgumentException();
+            var removed = false;
             if (obj instanceof KeyValuePair) {
                 for (var i = 0; i < this.Items.length; i++) {
-                    if (this.Items[i] == obj)
+                    if (this.Items[i] == obj) {
                         this.Items.splice(i, 1);
+                        removed = true;
+                    }
                 }
             } else {
                 for (var i = 0; i < this.Items.length; i++) {
-                    if (this.Items[i].Key == obj)
+                    if (this.Items[i].Key == obj) {
                         this.Items.splice(i, 1);
+                        removed = true;
+                    }
                 }
             }
+            if (!removed)
+                throw new KeyNotFoundException();
         };
 
         Dictionary.prototype.CopyTo = function (collection) {
@@ -1262,11 +1398,23 @@ var Collections;
         };
 
         SearchDictionary.prototype.Set = function (key, value) {
-            this.Items[key] = value;
+            if (this.Items[key] === undefined) {
+                this.Items[key] = value;
+                this._count++;
+            } else {
+                this.Items[key] = value;
+            }
         };
 
         SearchDictionary.prototype.Add = function (item) {
-            this.Items[item.Key] = item.Value;
+            if (item === undefined)
+                throw new InvalidArgumentException();
+            if (item == null) {
+                //this.Items[''] = null;
+                console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
+            } else
+                this.Items[item.Key] = item.Value;
+            this._count++;
         };
 
         SearchDictionary.prototype.GetKey = function (value) {
@@ -1278,6 +1426,7 @@ var Collections;
 
         SearchDictionary.prototype.Clear = function () {
             this.Items = {};
+            this._count = 0;
         };
 
         SearchDictionary.prototype.Contains = function (item) {
@@ -1293,17 +1442,28 @@ var Collections;
         };
 
         SearchDictionary.prototype.Remove = function (obj) {
+            if (obj === undefined)
+                throw new InvalidArgumentException();
+            var removed = false;
             if (obj instanceof KeyValuePair) {
                 for (var key in this.Items) {
-                    if (key == obj.Key && this.Items[key] == obj.Value)
+                    if (key == obj.Key && this.Items[key] == obj.Value) {
                         delete this.Items[key];
+                        this._count--;
+                        removed = true;
+                    }
                 }
             } else {
                 for (var key in this.Items) {
-                    if (this.Items[key] == obj)
+                    if (this.Items[key] == obj) {
                         delete this.Items[key];
+                        this._count--;
+                        removed = true;
+                    }
                 }
             }
+            if (!removed)
+                throw new KeyNotFoundException();
         };
 
         SearchDictionary.prototype.CopyTo = function (collection) {
@@ -1384,9 +1544,12 @@ var Collections;
     // Dictionary Iterator
     var DictionaryEnumerator = (function (_super) {
         __extends(DictionaryEnumerator, _super);
-        function DictionaryEnumerator(Items) {
+        function DictionaryEnumerator(items) {
             _super.call(this);
-            this.Items = Items;
+            if (items == undefined || items == null)
+                throw new InvalidArgumentException();
+            this.Items = items;
+            this.RefreshCurrent();
         }
         Object.defineProperty(DictionaryEnumerator.prototype, "Current", {
             get: function () {
@@ -1405,8 +1568,10 @@ var Collections;
         };
 
         DictionaryEnumerator.prototype.RefreshCurrent = function () {
-            this.Key = this.Current.Key;
-            this.Value = this.Current.Value;
+            if (this.Items.length > 0) {
+                this.Key = this.Current.Key;
+                this.Value = this.Current.Value;
+            }
         };
         return DictionaryEnumerator;
     })(BaseDictionaryEnumerator);
@@ -1415,14 +1580,19 @@ var Collections;
     // Optimized iterator for searchdictionary
     var SearchDictionaryEnumerator = (function (_super) {
         __extends(SearchDictionaryEnumerator, _super);
-        function SearchDictionaryEnumerator(Items) {
+        function SearchDictionaryEnumerator(items) {
             _super.call(this);
-            this.Items = Items;
-            this.Keys = this.Items.Keys();
+            if (items == undefined || items == null)
+                throw new InvalidArgumentException();
+            this.Items = items;
+            this.Keys = _.keys(this.Items);
+            this.RefreshCurrent();
         }
         Object.defineProperty(SearchDictionaryEnumerator.prototype, "Current", {
             get: function () {
-                return new KeyValuePair(this.Key, this.Value);
+                if (this.Keys.length > 0)
+                    return new KeyValuePair(this.Key, this.Value);
+                return undefined;
             },
             enumerable: true,
             configurable: true
@@ -1437,8 +1607,10 @@ var Collections;
         };
 
         SearchDictionaryEnumerator.prototype.RefreshCurrent = function () {
-            this.Key = this.Keys[this.Index];
-            this.Value = this.Items[this.Keys[this.Index]];
+            if (this.Keys.length > 0) {
+                this.Key = this.Keys[this.Index];
+                this.Value = this.Items[this.Keys[this.Index]];
+            }
         };
         return SearchDictionaryEnumerator;
     })(BaseDictionaryEnumerator);
@@ -3488,7 +3660,7 @@ var Panels;
                 // render tabs
             };
             return TabbedPanelGroup;
-        })(Panels.Groups.StackingPanelGroup);
+        })(Groups.StackingPanelGroup);
         Groups.TabbedPanelGroup = TabbedPanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -3851,7 +4023,7 @@ var Panels;
                 return new ResponsivePanelGroup(new (Function.prototype.bind.apply(viewportType, arguments)));
             };
             return ResponsivePanelGroup;
-        })(Panels.Groups.ManagedPanelGroup);
+        })(Groups.ManagedPanelGroup);
         Groups.ResponsivePanelGroup = ResponsivePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -3870,7 +4042,7 @@ var Panels;
             ComposablePanelGroup.prototype.Compose = function (composition) {
             };
             return ComposablePanelGroup;
-        })(Panels.Groups.ManagedPanelGroup);
+        })(Groups.ManagedPanelGroup);
         Groups.ComposablePanelGroup = ComposablePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;

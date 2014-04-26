@@ -69,7 +69,13 @@ module Collections {
 		}
 		
 		public Add(item: KeyValuePair<TKey, TValue>): void {
-		    this.Items[this.Items.length] = item;
+			if(item === undefined)
+				throw new InvalidArgumentException();
+			if(item == null){ // we are expected to accept null values
+				this.Items.push(new KeyValuePair<TKey, TValue>(null, null));
+				console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
+			}else
+		    	this.Items.push(item);
 		}
 		
 		public GetKey(value: TValue): TKey {
@@ -105,17 +111,26 @@ module Collections {
 		public Remove(item: KeyValuePair<TKey, TValue>): void;
 		public Remove(key: TKey): void;
 		public Remove(obj: any): void {
+			if(obj === undefined)
+				throw new InvalidArgumentException();
+			var removed = false;
 		    if(obj instanceof KeyValuePair){ // KVP
 		        for(var i=0; i<this.Items.length; i++){
-		            if(this.Items[i] == obj)
+		            if(this.Items[i] == obj){
 		                this.Items.splice(i, 1);
+						removed = true;
+					}
 		        }
 		    } else { // Key
     			for(var i=0; i<this.Items.length; i++){
-    				if(this.Items[i].Key == obj)
+    				if(this.Items[i].Key == obj){
     					this.Items.splice(i, 1);
+						removed = true;
+					}
     			}
 		    }
+			if(!removed)
+				throw new KeyNotFoundException();
 		}
 		
 		public CopyTo(collection: ICollection<KeyValuePair<TKey, TValue>>): void {
@@ -155,11 +170,23 @@ module Collections {
 		}
 		
 		public Set(key: string, value: TValue): void {
-			this.Items[key] = value;
+			if(this.Items[key] === undefined){
+				this.Items[key] = value;
+				this._count++;
+			}else{
+				this.Items[key] = value;
+			}
 		}
 		
 		public Add(item: KeyValuePair<string, TValue>): void {
-			this.Items[item.Key] = item.Value;
+			if(item === undefined)
+				throw new InvalidArgumentException();
+			if(item == null){ // we are expected to accept null values
+				//this.Items[''] = null;
+				console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
+			}else
+				this.Items[item.Key] = item.Value;
+			this._count++;
 		}
 		
 		public GetKey(value: TValue): string {
@@ -171,6 +198,7 @@ module Collections {
 		
 		public Clear(): void {
 			this.Items = {};
+			this._count = 0;
 		}
 		
 		public Contains(item: KeyValuePair<string, TValue>): boolean {
@@ -188,17 +216,28 @@ module Collections {
 		public Remove(item: KeyValuePair<string, TValue>): void;
 		public Remove(key: string): void;
 		public Remove(obj: any): void {
+			if(obj === undefined)
+				throw new InvalidArgumentException();
+			var removed = false;
 		    if(obj instanceof KeyValuePair){ // KVP
 		        for(var key in this.Items){
-		            if(key == obj.Key && this.Items[key] == obj.Value)
+		            if(key == obj.Key && this.Items[key] == obj.Value){
 		                delete this.Items[key];
+						this._count--;
+						removed = true;
+					}
 		        }
 		    } else { // Key
     			for(var key in this.Items){
-    				if(this.Items[key] == obj)
+    				if(this.Items[key] == obj){
     					delete this.Items[key];
+						this._count--;
+						removed = true;
+					}
     			}
 		    }
+			if(!removed)
+				throw new KeyNotFoundException();
 		}
 		
 		public CopyTo(collection: ICollection<KeyValuePair<string, TValue>>): void {
@@ -231,7 +270,7 @@ module Collections {
 		}
 		
 		get Current(): KeyValuePair<TKey, TValue> { throw new AbstractMethodException(); }
-		
+
 		public HasNext(): boolean { throw new AbstractMethodException(); }
 		
 		public IsValid(): boolean { throw new AbstractMethodException(); }
@@ -254,11 +293,19 @@ module Collections {
 	
 	// Dictionary Iterator
 	export class DictionaryEnumerator<TKey, TValue> extends BaseDictionaryEnumerator<TKey, TValue> {
+		private Items: KeyValuePair<TKey, TValue>[]
+
 		get Current(): KeyValuePair<TKey, TValue> {
 			return this.Items[this.Index];
 		}
 		
-		public constructor(private Items: KeyValuePair<TKey, TValue>[]) { super(); }s
+		public constructor(items: KeyValuePair<TKey, TValue>[]) {
+			super();
+			if(items == undefined || items == null)
+				throw new InvalidArgumentException();
+			this.Items = items;
+			this.RefreshCurrent();
+		}
         
         public HasNext(): boolean {
 			return (this.Index+1 < this.Items.length);
@@ -269,20 +316,32 @@ module Collections {
 		}
         
 		RefreshCurrent(): void {
-			this.Key = this.Current.Key;
-			this.Value = this.Current.Value;
+			if(this.Items.length > 0){
+				this.Key = this.Current.Key;
+				this.Value = this.Current.Value;
+			}
 		}
 	}
 
 	// Optimized iterator for searchdictionary
 	export class SearchDictionaryEnumerator<TValue> extends BaseDictionaryEnumerator<string, TValue> {
-		private Keys: string[] = (<any> this.Items).Keys();
-		
+		private Keys: string[];
+		private Items: { [name: string]: TValue; }
+
 		get Current(): KeyValuePair<string, TValue> {
-			return new KeyValuePair<string, TValue>(this.Key, this.Value);
+			if(this.Keys.length > 0)
+				return new KeyValuePair<string, TValue>(this.Key, this.Value);
+			return undefined;
 		}
 		
-		public constructor(private Items: { [name: string]: TValue; }) { super(); }
+		public constructor(items: { [name: string]: TValue; }) {
+			super();
+			if(items == undefined || items == null)
+				throw new InvalidArgumentException();
+			this.Items = items;
+			this.Keys = _.keys((<any> this.Items));
+			this.RefreshCurrent();
+		}
 		
 		public HasNext(): boolean {
 			return !(this.Keys[this.Index+1] == undefined);
@@ -293,8 +352,10 @@ module Collections {
 		}
 		
 		RefreshCurrent(): void{
-			this.Key = this.Keys[this.Index];
-			this.Value = this.Items[this.Keys[this.Index]];
+			if(this.Keys.length > 0) {
+				this.Key = this.Keys[this.Index];
+				this.Value = this.Items[this.Keys[this.Index]];
+			}
 		}
 	}
 }

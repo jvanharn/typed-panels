@@ -6,7 +6,7 @@ module Collections {
 		Insert(index: number, item: T): void;
 		InsertRange(index: number, collection: IEnumerable<T>): void;
 		RemoveAt(index: number): void;
-		RemoveRange(indexStart: number, indexEnd: number): void;
+		RemoveRange(index: number, count: number): void;
 	}
 	
 	/**
@@ -19,11 +19,15 @@ module Collections {
 		}
 		
 		public Add(item: T): void {
+			if(item === undefined)
+				throw new InvalidArgumentException();
 			this[this._length] = item;
 			this._length++;
 		}
 		
 		public AddRange(collection: IEnumerable<T>){
+			if(collection === undefined)
+				throw new InvalidArgumentException();
 		    var e = collection.GetEnumerator();
 		    if(e.Current != undefined)
 		    do {
@@ -32,6 +36,8 @@ module Collections {
 		}
 		
 		public Remove(item: T): void {
+			if(item === undefined)
+				throw new InvalidArgumentException();
 		    var minus = 0;
 			for(var i=0; i < this._length; i++){
 				if(item == this[i]){
@@ -39,18 +45,10 @@ module Collections {
 					minus++;
 				}
 			}
-			this._fixIndex();
-			this._length -= minus;
-		}
-		
-		public RemoveRange(indexStart: number, indexEnd: number): void {
-		    var minus = 0;
-		    for(var i=indexStart; i < indexEnd; i++){
-				delete this[i];
-				minus++;
-			}
-			this._fixIndex();
-			this._length -= minus;
+			if(minus > 0){
+				this._fixIndex();
+				//this._length -= minus;
+			}else throw new KeyNotFoundException();
 		}
 		
 		public Clear(): void {
@@ -69,25 +67,39 @@ module Collections {
 		}
 		
 		public IndexOf(item: T): number {
+			if(item === undefined)
+				throw new InvalidArgumentException();
 			for(var i=0; i<this._length; i++){
 				if(item == this[i])
 					return i;
 			}
-			return i;
+			return -1;
 		}
 		
 		public ElementAt(index: number): T {
+			if(index === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index >= this._length)
+				throw new IndexOutOfBoundsException();
 		    return this[index];
 		}
 		
 		public Insert(index: number, item: T): void {
-			if(index >= this._length)
-				throw new Error('Out of range exception.');
+			if(index === undefined || item === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index > this._length)
+				throw new IndexOutOfBoundsException();
+
 			this._makeGap(index, 1);
 			this[index] = item;
 		}
 		
 		public InsertRange(index: number, collection: IEnumerable<T>): void {
+			if(index === undefined || collection == undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index > this._length)
+				throw new IndexOutOfBoundsException();
+
 		    var elements = Enumerable.CopyToArray(collection);
 		    this._makeGap(index, elements.length);
 		    for(var i=0; i<elements.length; i++){
@@ -96,9 +108,25 @@ module Collections {
 		}
 		
 		public RemoveAt(index: number): void {
-			if(index >= this._length)
-				throw new Error('Out of range exception.');
+			if(index === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index >= this._length)
+				throw new IndexOutOfBoundsException();
+
 			delete this[index];
+			this._fixIndex();
+		}
+
+		public RemoveRange(index: number, count: number): void {
+			if(index === undefined || count === undefined)
+				throw new InvalidArgumentException();
+			if((index < 0 || index >= this._length) || (count < 0 || count > (this._length-index)))
+				throw new IndexOutOfBoundsException();
+
+			for(var i=0; i < count; i++)
+				delete this[index+i];
+
+			this._fixIndex();
 		}
 		
 		public CopyTo(collection: ICollection<T>): void {
@@ -124,28 +152,43 @@ module Collections {
 		private _fixIndex(): void {
 		    var removed = 0;
 	        var removalStart: number = -1;
-	        for(var i=0; i<this._length; i++){
-	            if(this[i] == undefined && this[i+1] == undefined){
+			var total = this._length;
+	        for(var i=0; i<total; i++){
+	            if(this[i] === undefined && this[i+1] === undefined){
 	                if(removalStart >= 0)
 	                    continue;
 	                else
 	                    removalStart = i;
-	            }else if(removalStart >= 0 && this[i] != undefined){
-	                this._removeGap(removalStart, (i-1));
-	                removalStart = -1;
-	                removed += (i-1) - removalStart;
-	            }else if(this[i] == undefined){
-	                this._removeGap(i, i+1);
-	                removed += 1;
-	            }
+	            }else if(removalStart >= 0 && this[i] !== undefined){
+	                var rem = this._removeGap(removalStart, (i-1));
+					removed += rem;
+					total -= rem;
+					removalStart = -1;
+	            }else if(removalStart == -1 && this[i] === undefined){
+	                var rem = this._removeGap(i, i);
+					total -= rem;
+					removed += rem;
+				}
 	        }
+			if(removalStart > -1)
+				removed += this._length-removalStart;
 	        this._length -= removed;
 		}
 		
-		private _removeGap(gapStart: number, gapEnd: number): void{
-		    for(var i=0; i<(gapEnd-gapStart); i++){
-		        this[gapStart+i] = this[gapEnd+i];
-		    }
+		private _removeGap(gapStart: number, gapEnd: number): number {
+			// fill gap
+			var gapSize = (gapEnd-gapStart)+1;
+			var gapPos = 1;
+			for(var i=gapStart; i<this._length; i++){
+				this[i] = this[gapEnd+gapPos];
+				gapPos++;
+			}
+			// remove excess
+			for(var r=this._length-gapSize; r<this._length; r++){
+				delete this[r];
+			}
+
+			return gapSize;
 		}
 		
 		private _makeGap(gapStart: number, gapLength: number): void{
@@ -165,12 +208,17 @@ module Collections {
 	
 	export class ListEnumerator<T> implements IEnumerator<T> {
 		Index: number = 0;
+		private List: List<T>;
 		
 		get Current(): T {
 			return this.List[this.Index];
 		}
 		
-		constructor(private List: List<T>) { }
+		constructor(list: List<T>) {
+			if(list == undefined || list == null)
+				throw new InvalidArgumentException();
+			this.List = list;
+		}
 		
 		public MoveNext(): boolean {
 			if(!this.HasNext())
@@ -184,7 +232,7 @@ module Collections {
 		}
 		
 		public IsValid(): boolean {
-			return (this.Index <= this.List.Count);
+			return (this.Index < this.List.Count);
 		}
 		
 		public Reset(): void {
@@ -206,22 +254,37 @@ module Collections {
 		}
 		
 		public Add(item: T): void {
-			this.Items[this.Items.length] = item;
+			if(item === undefined)
+				throw new InvalidArgumentException();
+			this.Items.push(item);
 		}
 		
 		public AddRange(collection: IEnumerable<T>){
-		    this.Items.concat(Enumerable.CopyToArray(collection));
+			if(collection === undefined)
+				throw new InvalidArgumentException();
+		    this.Items = this.Items.concat(Enumerable.CopyToArray(collection));
 		}
 		
 		public Remove(item: T): void {
+			if(item === undefined)
+				throw new InvalidArgumentException();
+			var removed = false;
 			for(var i=0; i<this.Items.length; i++){
-				if(item == this.Items[i])
+				if(item == this.Items[i]){
 					this.Items.splice(i, 1);
+					removed = true;
+				}
 			}
+			if(!removed)
+				throw new KeyNotFoundException();
 		}
 		
-		public RemoveRange(indexStart: number, indexEnd: number): void {
-		    this.Items.splice(indexStart, indexEnd-indexStart);
+		public RemoveRange(index: number, count: number): void {
+			if(index === undefined || count === undefined)
+				throw new InvalidArgumentException();
+			if((index < 0 || index >= this.Items.length) || (count < 0 || count > (this.Items.length-index)))
+				throw new IndexOutOfBoundsException();
+		    this.Items.splice(index, count);
 		}
 		
 		public Clear(): void {
@@ -229,40 +292,51 @@ module Collections {
 		}
 		
 		public Contains(item: T): boolean {
-			for(var i=0; i<this.Items.length; i++){
-				if(item == this.Items[i])
-					return true;
-			}
-			return false;
+			return (this.Items.indexOf(item) >= 0);
 		}
 		
 		public IndexOf(item: T): number {
-			for(var i=0; i<this.Items.length; i++){
-				if(item == this.Items[i])
-					return i;
-			}
-			return i;
+			if(item === undefined)
+				throw new InvalidArgumentException();
+
+			return this.Items.indexOf(item);
 		}
 		
 		public ElementAt(index: number): T {
+			if(index === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index >= this.Items.length)
+				throw new IndexOutOfBoundsException();
+
 		    return this.Items[index];
 		}
 		
 		public Insert(index: number, item: T): void {
-			if(index >= this.Items.length)
-				throw new Error('Out of range exception.');
+			if(index === undefined || item === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index > this.Items.length)
+				throw new IndexOutOfBoundsException();
+
 			this.Items.splice(index, 0, item);
 		}
 		
 		public InsertRange(index: number, collection: IEnumerable<T>): void {
+			if(index === undefined || collection == undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index > this.Items.length)
+				throw new IndexOutOfBoundsException();
+
 		    var sliceAfter = this.Items.slice(index);
 		    var sliceBefore = this.Items;
 		    this.Items = sliceBefore.concat(Enumerable.CopyToArray(collection)).concat(sliceAfter);
 		}
 		
 		public RemoveAt(index: number): void {
-			if(index >= this.Items.length)
-				throw new Error('Out of range exception.');
+			if(index === undefined)
+				throw new InvalidArgumentException();
+			if(index < 0 || index >= this.Items.length)
+				throw new IndexOutOfBoundsException();
+
 			this.Items.splice(index, 1);
 		}
 		
