@@ -2463,20 +2463,22 @@ var Panels;
         LiftablePanelHelper.LiftAllWithPanelDataFromElement = function (element) {
             var _this = this;
             var panels = [];
-            element.each(function (index, elem) {
-                var $elm = jQuery(elem);
-                var tp = _this.IsLiftableElement($elm);
-                switch (tp) {
-                    case 1 /* Panel */:
-                        panels.push(_this.LiftPanelFromElement($elm));
-                        break;
-                    case 2 /* Group */:
-                        panels.push(_this.LiftPanelGroupFromElement($elm));
-                        break;
-                    case 0 /* NotLiftable */:
-                        panels.concat(_this.LiftAllWithPanelDataFromElement($elm));
-                        break;
-                }
+            element.each(function (index, par) {
+                jQuery(par).children().each(function (index, elem) {
+                    var $elm = jQuery(elem);
+                    var tp = _this.IsLiftableElement($elm);
+                    switch (tp) {
+                        case 1 /* Panel */:
+                            panels.push(_this.LiftPanelFromElement($elm));
+                            break;
+                        case 2 /* Group */:
+                            panels.push(_this.LiftPanelGroupFromElement($elm));
+                            break;
+                        case 0 /* NotLiftable */:
+                            panels.concat(_this.LiftAllWithPanelDataFromElement($elm));
+                            break;
+                    }
+                });
             });
             return panels;
         };
