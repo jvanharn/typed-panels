@@ -57,8 +57,12 @@ module Panels {
 			public FillFromElement(panelElement: JQuery, panels: ILiftedPanelData[]): void {
 				if(_.size(this.Panels) > 0)
 					throw new RuntimeException('Tried to fill this group after panels were already added manually. This group does not support that.');
-					
-                Panels.LiftablePanelHelper.ReplacePanelElements(this, panelElement);
+				
+				var contentElement = Panels.LiftablePanelHelper.FindElementWithRole(panelElement, 'content');
+				if(contentElement.length == 0)
+					contentElement = jQuery('<div>');
+				
+                Panels.LiftablePanelHelper.ReplacePanelElements(this, panelElement, contentElement);
 				
 				this.TabsListElement = panelElement.find('ul');
 				if(this.TabsListElement.length == 0){

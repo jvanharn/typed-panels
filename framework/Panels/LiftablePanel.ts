@@ -336,6 +336,10 @@ module Panels {
 			}
         }
         
+		public static FindElementWithRole(root: JQuery, role: string): JQuery {
+			return root.find('['+this.DataElementRole+'='+role+']');
+		}
+		
         private static GetPanelObjectByString(objectPath: string): Function {
             var obj: Object;
             if(objectPath.indexOf('.') > -1)

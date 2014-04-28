@@ -968,6 +968,7 @@ declare module Panels {
         * Determines whether the object given can be used as a liftable panel .
         */
         static IsLiftablePanel(obj: Object): boolean;
+        static FindElementWithRole(root: JQuery, role: string): JQuery;
         private static GetPanelObjectByString(objectPath);
         private static GetGroupObjectByString(objectPath);
         private static ResolveObjectForPath(objectPath);
