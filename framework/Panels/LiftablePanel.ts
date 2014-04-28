@@ -127,45 +127,26 @@ module Panels {
          * Lifts a group from an element or a sub element. Only works on JQuery collections of length=1.
          */
         public static LiftPanelGroupFromElement(element: JQuery): ILiftedPanelData {
-            // Check element itself
-            var type = element.attr(this.DataGroupType);
-            if(type == undefined){
-                var panelElement = element.detach();
-                var contentElement = this.ExtractContentElement(panelElement);
-                var conf = this.ExtractPanelConfig(panelElement);
-                
-                var panels: ILiftedPanelData[];
-                if(contentElement != undefined)
-                    panels = this.LiftAllWithPanelDataFromElement(contentElement);
-                else panels = this.LiftAllWithPanelDataFromElement(panelElement);
-                
-                return {
-                    Panel: this.LiftedGroupConstructor(panelElement, contentElement, type, conf.Value1, panels),
-                    GroupConfig: conf.Value2
-                };
-            }else{
-                var panel = element.find('[' + this.DataGroupType + ']');
-                if(panel.length == 0)
-                    return undefined;
-                else if(panel.length > 1){
-                    panel = panel.first();
-                    console.log('Warning: Lifted a single panel from an element, where multiple elements where available.');
-                }
-                
-                var panelElement = element.detach();
-                var contentElement = this.ExtractContentElement(panelElement);
-                var conf = this.ExtractPanelConfig(panelElement);
-                
-                var panels: ILiftedPanelData[];
-                if(contentElement != undefined)
-                    panels = this.LiftAllWithPanelDataFromElement(contentElement);
-                else panels = this.LiftAllWithPanelDataFromElement(panelElement);
-                
-                return {
-                    Panel: this.LiftedGroupConstructor(panelElement, contentElement, type, conf.Value1, panels),
-                    GroupConfig: conf.Value2
-                };
-            }
+			if(!element.length || element.length > 1)
+				throw new InvalidArgumentException('Expected a jQuery object with just 1 element, got more or none.');
+			
+            var type = element.attr(this.DataGroupType); // Check for tag
+			if(type === undefined)
+				throw new InvalidArgumentException('Expected an element with a DataGroupType tag, but the given element did not have any.');
+			
+			var panelElement = element.detach();
+			var contentElement = this.ExtractContentElement(panelElement);
+			var conf = this.ExtractPanelConfig(panelElement);
+			
+			var panels: ILiftedPanelData[];
+			if(contentElement != undefined)
+				panels = this.LiftAllWithPanelDataFromElement(contentElement);
+			else panels = this.LiftAllWithPanelDataFromElement(panelElement);
+			
+			return {
+				Panel: this.LiftedGroupConstructor(panelElement, contentElement, type, conf.Value1, panels),
+				GroupConfig: conf.Value2
+			};
         }
         
         /**
