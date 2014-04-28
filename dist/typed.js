@@ -2460,20 +2460,22 @@ var Panels;
         LiftablePanelHelper.LiftAllFromElement = function (elements) {
             var _this = this;
             var panels = [];
-            elements.each(function (index, elem) {
-                var $elm = jQuery(elem);
-                var tp = _this.IsLiftableElement($elm);
-                switch (tp) {
-                    case 1 /* Panel */:
-                        panels.push(_this.LiftPanelFromElement($elm).Panel);
-                        break;
-                    case 2 /* Group */:
-                        panels.push(_this.LiftPanelGroupFromElement($elm).Panel);
-                        break;
-                    case 0 /* NotLiftable */:
-                        panels.concat(_this.LiftAllFromElement($elm));
-                        break;
-                }
+            elements.each(function (index, par) {
+                jQuery(par).children().each(function (index, elem) {
+                    var $elm = jQuery(elem);
+                    var tp = _this.IsLiftableElement($elm);
+                    switch (tp) {
+                        case 1 /* Panel */:
+                            panels.push(_this.LiftPanelFromElement($elm).Panel);
+                            break;
+                        case 2 /* Group */:
+                            panels.push(_this.LiftPanelGroupFromElement($elm).Panel);
+                            break;
+                        case 0 /* NotLiftable */:
+                            panels.concat(_this.LiftAllFromElement($elm));
+                            break;
+                    }
+                });
             });
             return panels;
         };
@@ -3660,7 +3662,7 @@ var Panels;
                 // render tabs
             };
             return TabbedPanelGroup;
-        })(Groups.StackingPanelGroup);
+        })(Panels.Groups.StackingPanelGroup);
         Groups.TabbedPanelGroup = TabbedPanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -4023,7 +4025,7 @@ var Panels;
                 return new ResponsivePanelGroup(new (Function.prototype.bind.apply(viewportType, arguments)));
             };
             return ResponsivePanelGroup;
-        })(Groups.ManagedPanelGroup);
+        })(Panels.Groups.ManagedPanelGroup);
         Groups.ResponsivePanelGroup = ResponsivePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -4042,7 +4044,7 @@ var Panels;
             ComposablePanelGroup.prototype.Compose = function (composition) {
             };
             return ComposablePanelGroup;
-        })(Groups.ManagedPanelGroup);
+        })(Panels.Groups.ManagedPanelGroup);
         Groups.ComposablePanelGroup = ComposablePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;

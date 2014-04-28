@@ -174,20 +174,22 @@ module Panels {
          */
         public static LiftAllFromElement(elements: JQuery): IPanel[] {
             var panels: IPanel[] = [];
-            elements.each((index, elem) => {
-                var $elm = jQuery(elem);
-                var tp = this.IsLiftableElement($elm);
-                switch(tp){
-                    case LiftableElementState.Panel:
-                        panels.push(this.LiftPanelFromElement($elm).Panel);
-                        break;
-                    case LiftableElementState.Group:
-                        panels.push(this.LiftPanelGroupFromElement($elm).Panel);
-                        break;
-                    case LiftableElementState.NotLiftable:
-                        panels.concat(this.LiftAllFromElement($elm));
-                        break;
-                }
+            elements.each((index, par) => {
+				jQuery(par).children().each((index, elem) => {
+					var $elm = jQuery(elem);
+					var tp = this.IsLiftableElement($elm);
+					switch(tp){
+						case LiftableElementState.Panel:
+							panels.push(this.LiftPanelFromElement($elm).Panel);
+							break;
+						case LiftableElementState.Group:
+							panels.push(this.LiftPanelGroupFromElement($elm).Panel);
+							break;
+						case LiftableElementState.NotLiftable:
+							panels.concat(this.LiftAllFromElement($elm));
+							break;
+					}
+				});
             });
             return panels;
         }
