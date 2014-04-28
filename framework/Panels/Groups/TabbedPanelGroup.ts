@@ -72,8 +72,10 @@ module Panels {
 					}
 				}else{
 					// existing tabs
-					var panel = panels[i].Panel;
+					var panel: IPanel;
 					for(var i=0; i<panels.length; i++){
+						panel = panels[i].Panel;
+						
 						super.AddPanel(panel);
 						
 						var tab = this.TabsListElement.find('li[data-panelid='+panel.PanelSeqId+']');

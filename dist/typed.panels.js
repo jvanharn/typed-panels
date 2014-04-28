@@ -2431,8 +2431,10 @@ var Panels;
                     }
                 } else {
                     // existing tabs
-                    var panel = panels[i].Panel;
+                    var panel;
                     for (var i = 0; i < panels.length; i++) {
+                        panel = panels[i].Panel;
+
                         _super.prototype.AddPanel.call(this, panel);
 
                         var tab = this.TabsListElement.find('li[data-panelid=' + panel.PanelSeqId + ']');
