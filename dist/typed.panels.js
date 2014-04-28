@@ -1900,43 +1900,25 @@ var Panels;
         * Lifts a panel from an element. (Only a single panel is supported, the first found panel element is detached from the element, the rest is ignored.)
         */
         LiftablePanelHelper.LiftPanelFromElement = function (element) {
-            // Check element itself
+            if (!element.length || element.length > 1)
+                throw new InvalidArgumentException('Expected a jQuery object with just 1 element, got more or none.');
+
             var type = element.attr(this.DataPanelType);
-            if (type == undefined) {
-                var panelElement = element.detach();
-                var contentElement = this.ExtractContentElement(panelElement);
-                var conf = this.ExtractPanelConfig(panelElement);
+            if (type === undefined)
+                throw new InvalidArgumentException('Expected an element with a DataGroupType tag, but the given element did not have any.');
 
-                var panelName = panelElement.attr('id');
-                if (panelName === null || panelName == '')
-                    panelName = undefined;
+            var panelElement = element.detach();
+            var contentElement = this.ExtractContentElement(panelElement);
+            var conf = this.ExtractPanelConfig(panelElement);
 
-                return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
-                    GroupConfig: conf.Value2
-                };
-            } else {
-                var panel = element.find('[' + this.DataPanelType + ']');
-                if (panel.length == 0)
-                    return undefined;
-                else if (panel.length > 1) {
-                    panel = panel.first();
-                    console.log('Warning: Lifted a single panel from an element, where multiple elements where available.');
-                }
+            var panelName = panelElement.attr('id');
+            if (panelName === null || panelName == '')
+                panelName = undefined;
 
-                var panelElement = element.detach();
-                var contentElement = this.ExtractContentElement(panelElement);
-                var conf = this.ExtractPanelConfig(panelElement);
-
-                var panelName = panelElement.attr('id');
-                if (panelName === null || panelName == '')
-                    panelName = undefined;
-
-                return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
-                    GroupConfig: conf.Value2
-                };
-            }
+            return {
+                Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
+                GroupConfig: conf.Value2
+            };
         };
 
         /**
@@ -2149,7 +2131,7 @@ var Panels;
         * Determines whether the object given can be used as a liftable panel .
         */
         LiftablePanelHelper.IsLiftablePanel = function (obj) {
-            if (obj != undefined)
+            if (obj == undefined)
                 return false;
             if (typeof obj == 'function') {
                 return (typeof obj.prototype['FillFromElement'] == 'function');
