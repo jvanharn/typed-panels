@@ -2382,8 +2382,12 @@ var Panels;
                 var contentElement = this.ExtractContentElement(panelElement);
                 var conf = this.ExtractPanelConfig(panelElement);
 
+                var panelName = panelElement.attr('id');
+                if (panelName === null || panelName == '')
+                    panelName = undefined;
+
                 return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, type, conf.Value1),
+                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
                     GroupConfig: conf.Value2
                 };
             } else {
@@ -2399,8 +2403,12 @@ var Panels;
                 var contentElement = this.ExtractContentElement(panelElement);
                 var conf = this.ExtractPanelConfig(panelElement);
 
+                var panelName = panelElement.attr('id');
+                if (panelName === null || panelName == '')
+                    panelName = undefined;
+
                 return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, type, conf.Value1),
+                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
                     GroupConfig: conf.Value2
                 };
             }
@@ -2421,6 +2429,10 @@ var Panels;
             var contentElement = this.ExtractContentElement(panelElement);
             var conf = this.ExtractPanelConfig(panelElement);
 
+            var panelName = panelElement.attr('id');
+            if (panelName === null || panelName == '')
+                panelName = undefined;
+
             var panels;
             if (contentElement != undefined)
                 panels = this.LiftAllWithPanelDataFromElement(contentElement);
@@ -2428,7 +2440,7 @@ var Panels;
                 panels = this.LiftAllWithPanelDataFromElement(panelElement);
 
             return {
-                Panel: this.LiftedGroupConstructor(panelElement, contentElement, type, conf.Value1, panels),
+                Panel: this.LiftedGroupConstructor(panelElement, contentElement, panelName, type, conf.Value1, panels),
                 GroupConfig: conf.Value2
             };
         };
@@ -2527,7 +2539,7 @@ var Panels;
             return this.LiftPanelFromElement(element);
         };
 
-        LiftablePanelHelper.LiftedPanelConstructor = function (panelElement, contentElement, panelType, panelConfig) {
+        LiftablePanelHelper.LiftedPanelConstructor = function (panelElement, contentElement, panelName, panelType, panelConfig) {
             if (panelType != undefined && panelType.length > 0) {
                 // Defined type
                 var constr = this.GetPanelObjectByString(panelType);
@@ -2535,17 +2547,17 @@ var Panels;
                     console.error('Undefined panel type set in element attribute. Given type "' + panelType + '" was not found and could not be instantiated.');
 
                     // try to fix it with the Default type
-                    return this.DefaultPanelConstructor(panelElement, contentElement, panelConfig);
+                    return this._setPanelName(this.DefaultPanelConstructor(panelElement, contentElement, panelConfig), panelName);
                 } else {
-                    return new (constr.bind.apply(constr, [constr].concat(panelConfig)))();
+                    return this._setPanelName(new (constr.bind.apply(constr, [constr].concat(panelConfig)))(), panelName);
                 }
             } else {
                 // Default type
-                return this.DefaultPanelConstructor(panelElement, contentElement, panelConfig);
+                return this._setPanelName(this.DefaultPanelConstructor(panelElement, contentElement, panelConfig), panelName);
             }
         };
 
-        LiftablePanelHelper.LiftedGroupConstructor = function (panelElement, contentElement, groupType, panelConfig, panels) {
+        LiftablePanelHelper.LiftedGroupConstructor = function (panelElement, contentElement, panelName, groupType, panelConfig, panels) {
             if (typeof panels === "undefined") { panels = []; }
             if (groupType != undefined && groupType.length > 0) {
                 // Defined type
@@ -2554,15 +2566,21 @@ var Panels;
                     console.error('Undefined panel type set in element attribute. Given type "' + groupType + '" was not found and could not be instantiated.');
 
                     // try to fix it with the Default type
-                    return this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels);
+                    return this._setPanelName(this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels), panelName);
                 } else {
-                    var pn = new (constr.bind.apply(constr, [constr].concat(panelConfig)))();
+                    var pn = this._setPanelName(new (constr.bind.apply(constr, [constr].concat(panelConfig)))(), panelName);
                     pn.FillFromElement(panelElement, panels);
                     return pn;
                 }
             } else {
-                return this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels);
+                return this._setPanelName(this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels), panelName);
             }
+        };
+
+        LiftablePanelHelper._setPanelName = function (obj, panelName) {
+            if (panelName != undefined)
+                obj.PanelName = panelName;
+            return obj;
         };
 
         /**
@@ -2602,8 +2620,17 @@ var Panels;
             }
         };
 
+        /**
+        * Determines whether the object given can be used as a liftable panel .
+        */
         LiftablePanelHelper.IsLiftablePanel = function (obj) {
-            return (obj != undefined && typeof obj['CreateFromElement'] == 'function');
+            if (obj != undefined)
+                return false;
+            if (typeof obj == 'function') {
+                return (typeof obj.prototype['FillFromElement'] == 'function');
+            } else {
+                return (typeof obj['FillFromElement'] == 'function');
+            }
         };
 
         LiftablePanelHelper.GetPanelObjectByString = function (objectPath) {
@@ -3605,8 +3632,10 @@ var Panels;
             __extends(TabbedPanelGroup, _super);
             function TabbedPanelGroup() {
                 _super.call(this);
-                this.TabsListElement = jQuery("<ul>");
-                this.PanelElement.prepend(this.TabsListElement);
+                this.TabsListElement = jQuery('<ul>');
+                this.PanelElement.append(this.TabsListElement);
+                this.ContentElement = jQuery('<div>');
+                this.PanelElement.append(this.ContentElement);
             }
             /**
             * Add an panel to the group.
@@ -3638,10 +3667,52 @@ var Panels;
             };
 
             /**
-            *
+            * Render all the sub panels.
             */
             TabbedPanelGroup.prototype.Render = function () {
-                // render tabs
+                _.each(this.Panels, function (panel) {
+                    panel.Render();
+                });
+            };
+
+            TabbedPanelGroup.prototype.FillFromElement = function (panelElement, panels) {
+                var _this = this;
+                if (_.size(this.Panels) > 0)
+                    throw new RuntimeException('Tried to fill this group after panels were already added manually. This group does not support that.');
+
+                Panels.LiftablePanelHelper.ReplacePanelElements(this, panelElement);
+
+                this.TabsListElement = panelElement.find('ul');
+                if (this.TabsListElement.length == 0) {
+                    console.log('No tab list found for lifting panel from DOM, proceeded to make a tablist ourselves.');
+
+                    this.TabsListElement = jQuery('<ul>');
+                    this.PanelElement.prepend(this.TabsListElement);
+
+                    for (var i = 0; i < panels.length; i++) {
+                        this.AddPanel(panels[i].Panel);
+                    }
+                } else {
+                    // existing tabs
+                    var panel = panels[i].Panel;
+                    for (var i = 0; i < panels.length; i++) {
+                        _super.prototype.AddPanel.call(this, panel);
+
+                        var tab = this.TabsListElement.find('li[data-panelid=' + panel.PanelSeqId + ']');
+                        if (tab.length == 0) {
+                            tab = this.TabsListElement.find('li[data-show-panel=' + panel.PanelName + ']');
+                            if (tab.length == 0) {
+                                console.error('No tab found for panel with name "' + panel.PanelName + '"!!');
+                                continue;
+                            } else {
+                                tab.attr('data-panelid', panel.PanelSeqId);
+                            }
+                        }
+                        tab.click(function (e) {
+                            return _this.Show(panel.PanelName);
+                        });
+                    }
+                }
             };
             return TabbedPanelGroup;
         })(Panels.Groups.StackingPanelGroup);

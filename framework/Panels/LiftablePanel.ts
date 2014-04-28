@@ -99,8 +99,12 @@ module Panels {
                 var contentElement = this.ExtractContentElement(panelElement);
                 var conf = this.ExtractPanelConfig(panelElement);
                 
+				var panelName = panelElement.attr('id');
+				if(panelName === null || panelName == '')
+					panelName = undefined;
+				
                 return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, type, conf.Value1),
+                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
                     GroupConfig: conf.Value2
                 };
             }else{
@@ -116,8 +120,12 @@ module Panels {
                 var contentElement = this.ExtractContentElement(panelElement);
                 var conf = this.ExtractPanelConfig(panelElement);
                 
+				var panelName = panelElement.attr('id');
+				if(panelName === null || panelName == '')
+					panelName = undefined;
+				
                 return {
-                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, type, conf.Value1),
+                    Panel: this.LiftedPanelConstructor(panelElement, contentElement, panelName, type, conf.Value1),
                     GroupConfig: conf.Value2
                 }
             }
@@ -138,13 +146,17 @@ module Panels {
 			var contentElement = this.ExtractContentElement(panelElement);
 			var conf = this.ExtractPanelConfig(panelElement);
 			
+			var panelName = panelElement.attr('id');
+			if(panelName === null || panelName == '')
+				panelName = undefined;
+			
 			var panels: ILiftedPanelData[];
 			if(contentElement != undefined)
 				panels = this.LiftAllWithPanelDataFromElement(contentElement);
 			else panels = this.LiftAllWithPanelDataFromElement(panelElement);
 			
 			return {
-				Panel: this.LiftedGroupConstructor(panelElement, contentElement, type, conf.Value1, panels),
+				Panel: this.LiftedGroupConstructor(panelElement, contentElement, panelName, type, conf.Value1, panels),
 				GroupConfig: conf.Value2
 			};
         }
@@ -236,50 +248,62 @@ module Panels {
             return <any> this.LiftPanelFromElement(element);
         }
         
-        private static LiftedPanelConstructor(panelElement: JQuery, contentElement: JQuery, panelType?: string, panelConfig?: any): IPanel {
+        private static LiftedPanelConstructor(panelElement: JQuery, contentElement: JQuery, panelName?: string, panelType?: string, panelConfig?: any): IPanel {
             if(panelType != undefined && panelType.length > 0){
                 // Defined type
                 var constr = this.GetPanelObjectByString(panelType);
                 if(constr == null){
                     console.error('Undefined panel type set in element attribute. Given type "'+panelType+'" was not found and could not be instantiated.');
                     // try to fix it with the Default type
-                    return this.DefaultPanelConstructor(panelElement, contentElement, panelConfig);
+					return this._setPanelName<IPanel>(this.DefaultPanelConstructor(panelElement, contentElement, panelConfig), panelName);
                 }else{
-                    return new (
-                        constr.bind.apply(
-                            constr,
-                            [constr].concat(panelConfig)
-                        )
-                    )();
+                    return this._setPanelName<IPanel>(
+						new (
+							constr.bind.apply(
+								constr,
+								[constr].concat(panelConfig)
+							)
+						)(),
+						panelName
+					);
                 }
             }else{
                 // Default type
-                return this.DefaultPanelConstructor(panelElement, contentElement, panelConfig);
+                return this._setPanelName<IPanel>(this.DefaultPanelConstructor(panelElement, contentElement, panelConfig), panelName);
             }
         }
         
-        private static LiftedGroupConstructor(panelElement: JQuery, contentElement: JQuery, groupType?: string, panelConfig?: any, panels: ILiftedPanelData[] = []): IPanelGroup {
+        private static LiftedGroupConstructor(panelElement: JQuery, contentElement: JQuery, panelName?: string, groupType?: string, panelConfig?: any, panels: ILiftedPanelData[] = []): IPanelGroup {
             if(groupType != undefined && groupType.length > 0){
                 // Defined type
                 var constr = this.GetGroupObjectByString(groupType);
                 if(constr == null){
                     console.error('Undefined panel type set in element attribute. Given type "'+groupType+'" was not found and could not be instantiated.');
                     // try to fix it with the Default type
-                    return this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels);
+                    return this._setPanelName<IPanelGroup>(this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels), panelName);
                 }else{
-                    var pn = <ILiftablePanelGroup> new (
-                        constr.bind.apply(
-                            constr,
-                            [constr].concat(panelConfig)
-                        )
-                    )();
+                    var pn = this._setPanelName<ILiftablePanelGroup>(
+						new (
+							constr.bind.apply(
+								constr,
+								[constr].concat(panelConfig)
+							)
+						)(),
+						panelName
+					);
                     pn.FillFromElement(panelElement, panels);
                     return pn;
                 }
             }else{
-                return this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels);
+                return this._setPanelName<IPanelGroup>(this.DefaultPanelGroupConstructor(panelElement, contentElement, panelConfig, panels), panelName);
             }
         }
+		
+		private static _setPanelName<T extends IPanel>(obj: T, panelName: string): T{
+			if(panelName != undefined)
+				obj.PanelName = panelName;
+			return obj;
+		}
         
         /**
          * This method does a basic copy that will be able to replace the panel elements for most panels.
@@ -318,8 +342,16 @@ module Panels {
             }
         }
         
+		/**
+		 * Determines whether the object given can be used as a liftable panel .
+		 */
         public static IsLiftablePanel(obj: Object): boolean {
-            return (obj != undefined && typeof obj['CreateFromElement'] == 'function');
+			if(obj != undefined) return false;
+			if(typeof obj == 'function'){
+				return (typeof (<Function> obj).prototype['FillFromElement'] == 'function');
+			}else{
+				return (typeof obj['FillFromElement'] == 'function');
+			}
         }
         
         private static GetPanelObjectByString(objectPath: string): Function {

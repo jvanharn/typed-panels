@@ -3,7 +3,7 @@ module Panels {
         /**
          * The simplest of all PanelGroups. Shows only one Panel at all times, hides the rest. (No animation)
          */
-        export class TabbedPanelGroup extends StackingPanelGroup {
+        export class TabbedPanelGroup extends StackingPanelGroup implements ILiftablePanelGroup {
             /**
              * The UL element containing all the tabs.
              */
@@ -11,8 +11,10 @@ module Panels {
             
             public constructor(){
                 super();
-                this.TabsListElement = jQuery("<ul>");
-                this.PanelElement.prepend(this.TabsListElement);
+                this.TabsListElement = jQuery('<ul>');
+                this.PanelElement.append(this.TabsListElement);
+				this.ContentElement = jQuery('<div>');
+				this.PanelElement.append(this.ContentElement);
             }
             
             /**
@@ -44,11 +46,49 @@ module Panels {
     		}
             
             /**
-             * 
+             * Render all the sub panels.
              */
             public Render(): void {
-                // render tabs
-                
+                _.each(this.Panels, function(panel){
+					panel.Render();
+				});
+            }
+			
+			public FillFromElement(panelElement: JQuery, panels: ILiftedPanelData[]): void {
+				if(_.size(this.Panels) > 0)
+					throw new RuntimeException('Tried to fill this group after panels were already added manually. This group does not support that.');
+					
+                Panels.LiftablePanelHelper.ReplacePanelElements(this, panelElement);
+				
+				this.TabsListElement = panelElement.find('ul');
+				if(this.TabsListElement.length == 0){
+					console.log('No tab list found for lifting panel from DOM, proceeded to make a tablist ourselves.');
+					
+					this.TabsListElement = jQuery('<ul>');
+					this.PanelElement.prepend(this.TabsListElement);
+					
+					for(var i=0; i<panels.length; i++){
+						this.AddPanel(panels[i].Panel);
+					}
+				}else{
+					// existing tabs
+					var panel = panels[i].Panel;
+					for(var i=0; i<panels.length; i++){
+						super.AddPanel(panel);
+						
+						var tab = this.TabsListElement.find('li[data-panelid='+panel.PanelSeqId+']');
+						if(tab.length == 0){
+							tab = this.TabsListElement.find('li[data-show-panel='+panel.PanelName+']');
+							if(tab.length == 0){
+								console.error('No tab found for panel with name "'+panel.PanelName+'"!!');
+								continue;
+							}else{
+								tab.attr('data-panelid', panel.PanelSeqId);
+							}
+						}
+						tab.click(e => this.Show(panel.PanelName));
+					}
+				}
             }
         }
     }

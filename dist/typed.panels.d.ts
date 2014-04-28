@@ -771,13 +771,17 @@ declare module Panels {
         * Lifts a panel from the element and returns it as the given type.
         */
         static LiftTypedPanelFromElement<TPanel extends IPanel>(element: JQuery): TPanel;
-        private static LiftedPanelConstructor(panelElement, contentElement, panelType?, panelConfig?);
-        private static LiftedGroupConstructor(panelElement, contentElement, groupType?, panelConfig?, panels?);
+        private static LiftedPanelConstructor(panelElement, contentElement, panelName?, panelType?, panelConfig?);
+        private static LiftedGroupConstructor(panelElement, contentElement, panelName?, groupType?, panelConfig?, panels?);
+        private static _setPanelName<T extends IPanel>(obj, panelName);
         /**
         * This method does a basic copy that will be able to replace the panel elements for most panels.
         * WARNING: This method makes assumptions, it will for example not copy any attributes other thatn the id and class attributes.
         */
         static ReplacePanelElements(panel: IPanel, panelElement?: JQuery, contentElement?: JQuery): void;
+        /**
+        * Determines whether the object given can be used as a liftable panel .
+        */
         static IsLiftablePanel(obj: Object): boolean;
         private static GetPanelObjectByString(objectPath);
         private static GetGroupObjectByString(objectPath);
@@ -938,7 +942,7 @@ declare module Panels {
         /**
         * The simplest of all PanelGroups. Shows only one Panel at all times, hides the rest. (No animation)
         */
-        class TabbedPanelGroup extends StackingPanelGroup {
+        class TabbedPanelGroup extends StackingPanelGroup implements ILiftablePanelGroup {
             /**
             * The UL element containing all the tabs.
             */
@@ -953,9 +957,10 @@ declare module Panels {
             public Show(name: string): void;
             private FindTabByName(name);
             /**
-            *
+            * Render all the sub panels.
             */
             public Render(): void;
+            public FillFromElement(panelElement: JQuery, panels: ILiftedPanelData[]): void;
         }
     }
 }
