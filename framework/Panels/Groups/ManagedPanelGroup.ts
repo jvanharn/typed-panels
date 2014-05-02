@@ -48,12 +48,33 @@ module Panels {
     		 * Add an panel to the group.
     		 */
     		public AddPanel(panel: IPanel): void {
+				if(PanelGroupHelper.IsPanelAttachable(panel))
+					throw new RuntimeException('The panel given seems to already be attached to another group or structure within the dom. Please free it before adding it to another group.');
     		    var ref = this.MakeReference(panel);
     		    this.References.AttachRef(ref);
     		    this._viewport.Attach(ref);
     		    if(this._defaultVisibility)
     		        this.ShowByReference(ref);
     		}
+			
+			/**
+			 * Detach a panel from the group.
+			 */
+			public DetachPanel(name: string): IPanel {
+				var ref = this.References.GetRefByName(name);
+				return this.DetachPanelByReference(ref);
+			}
+			
+			/**
+			 * Detach a panel from the group.
+			 */
+			public DetachPanelByReference(ref: Panels.PanelReference): IPanel {
+				this._viewport.Detach(ref);
+				this.References.DetachRef(ref);
+				return ref.Panel;
+				// @todo Hide the panel and wait for the animation completion before detaching the panel.
+				// @todo invalidate the reference in a way that removes this group from the reference.
+			}
     		
     		/**
     		 * Get a panel from the group by it's name.

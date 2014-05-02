@@ -1770,6 +1770,18 @@ var Panels;
         };
 
         /**
+        * Detach the panel with the given name.
+        */
+        PanelGroup.prototype.DetachPanel = function (name) {
+            if (this.Panels[name] === undefined)
+                throw new UnknownPanelException();
+            this.Panels[name].PanelElement.detach();
+            var pn = this.Panels[name];
+            delete this.Panels[name];
+            return pn;
+        };
+
+        /**
         * Get a panel from the group by it's name.
         */
         PanelGroup.prototype.GetPanel = function (name) {
@@ -1806,6 +1818,19 @@ var Panels;
         return PanelGroup;
     })(Panels.Panel);
     Panels.PanelGroup = PanelGroup;
+
+    var PanelGroupHelper = (function () {
+        function PanelGroupHelper() {
+        }
+        /**
+        * Check whether the given panel is not attached to another group.
+        */
+        PanelGroupHelper.IsPanelAttachable = function (panel) {
+            return (panel.PanelElement.parent().length == 0);
+        };
+        return PanelGroupHelper;
+    })();
+    Panels.PanelGroupHelper = PanelGroupHelper;
 })(Panels || (Panels = {}));
 
 var UnknownPanelException = (function (_super) {
@@ -2133,11 +2158,13 @@ var Panels;
         LiftablePanelHelper.IsLiftablePanel = function (obj) {
             if (obj == undefined)
                 return false;
-            if (typeof obj == 'function') {
-                return (typeof obj.prototype['FillFromElement'] == 'function');
-            } else {
-                return (typeof obj['FillFromElement'] == 'function');
-            }
+            return true;
+            // @todo Re-enable the code below and test it thoroughly.
+            /*if(typeof obj == 'function'){
+            return (typeof (<Function> obj).prototype['FillFromElement'] == 'function');
+            }else{
+            return (typeof obj['FillFromElement'] == 'function');
+            }*/
         };
 
         LiftablePanelHelper.FindElementWithRole = function (root, role) {
@@ -2407,6 +2434,14 @@ var Panels;
                 return this.TabsListElement.find("li[data-panelid=" + this.Panels[name].PanelSeqId + "]");
             };
 
+            TabbedPanelGroup.prototype.ShowTabs = function () {
+                this.TabsListElement.show();
+            };
+
+            TabbedPanelGroup.prototype.HideTabs = function () {
+                this.TabsListElement.hide();
+            };
+
             /**
             * Render all the sub panels.
             */
@@ -2439,18 +2474,17 @@ var Panels;
                     }
                 } else {
                     // existing tabs
-                    var panel;
-                    for (var i = 0; i < panels.length; i++) {
-                        panel = panels[i].Panel;
+                    _.each(panels, function (pnl) {
+                        var panel = pnl.Panel;
 
-                        _super.prototype.AddPanel.call(this, panel);
+                        _super.prototype.AddPanel.call(_this, panel);
 
-                        var tab = this.TabsListElement.find('li[data-panelid=' + panel.PanelSeqId + ']');
+                        var tab = _this.TabsListElement.find('li[data-panelid=' + panel.PanelSeqId + ']');
                         if (tab.length == 0) {
-                            tab = this.TabsListElement.find('li[data-show-panel=' + panel.PanelName + ']');
+                            tab = _this.TabsListElement.find('li[data-show-panel=' + panel.PanelName + ']');
                             if (tab.length == 0) {
                                 console.error('No tab found for panel with name "' + panel.PanelName + '"!!');
-                                continue;
+                                return;
                             } else {
                                 tab.attr('data-panelid', panel.PanelSeqId);
                             }
@@ -2458,7 +2492,7 @@ var Panels;
                         tab.click(function (e) {
                             return _this.Show(panel.PanelName);
                         });
-                    }
+                    });
                 }
             };
             return TabbedPanelGroup;

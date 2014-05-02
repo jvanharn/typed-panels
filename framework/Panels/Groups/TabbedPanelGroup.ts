@@ -45,6 +45,14 @@ module Panels {
     		    return this.TabsListElement.find("li[data-panelid="+this.Panels[name].PanelSeqId+"]");
     		}
             
+			public ShowTabs(): void {
+				this.TabsListElement.show();
+			}
+			
+			public HideTabs(): void {
+				this.TabsListElement.hide();
+			}
+			
             /**
              * Render all the sub panels.
              */
@@ -76,9 +84,8 @@ module Panels {
 					}
 				}else{
 					// existing tabs
-					var panel: IPanel;
-					for(var i=0; i<panels.length; i++){
-						panel = panels[i].Panel;
+					_.each(panels, (pnl) => {
+						var panel = pnl.Panel;
 						
 						super.AddPanel(panel);
 						
@@ -87,13 +94,13 @@ module Panels {
 							tab = this.TabsListElement.find('li[data-show-panel='+panel.PanelName+']');
 							if(tab.length == 0){
 								console.error('No tab found for panel with name "'+panel.PanelName+'"!!');
-								continue;
+								return;
 							}else{
 								tab.attr('data-panelid', panel.PanelSeqId);
 							}
 						}
 						tab.click(e => this.Show(panel.PanelName));
-					}
+					});
 				}
             }
         }

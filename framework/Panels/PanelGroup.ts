@@ -7,6 +7,11 @@ module Panels {
 		AddPanel(panel: IPanel): void;
 		
 		/**
+		 * Detach a panel by it's name and get the panel object.
+		 */
+		DetachPanel(name: string): IPanel;
+		
+		/**
 		 * Get a panel from the group by it's name.
 		 */
 		GetPanel(name: string): IPanel;
@@ -45,12 +50,29 @@ module Panels {
 	}
 	
 	export interface IReferencedViewportPanelGroup extends IViewportPanelGroup {
+		/**
+		 * Detach a panel from this group.
+		 */
+	    DetachPanelByReference(ref: Panels.PanelReference): IPanel;
+		
+		/**
+		 * Check if the panel with the given name is registered with this group.
+		 */
 	    HasPanelByReference(ref: Panels.PanelReference): boolean;
 	    
+		/**
+		 * Show a panel by its reference object.
+		 */
 	    ShowByReference(ref: Panels.PanelReference): void;
 	    
+		/**
+		 * Hide a panel by its reference.
+		 */
 	    HideByReference(ref: Panels.PanelReference): void;
 	    
+		/**
+		 * Check if a panel in this group is currently in the viewport.
+		 */
 	    IsVisibleByReference(ref: Panels.PanelReference): boolean;
 	}
     
@@ -72,6 +94,18 @@ module Panels {
 		public AddPanel(panel: IPanel): void {
 			this.Panels[panel.PanelName] = panel;
 			this.ContentElement.append(panel.PanelElement);
+		}
+		
+		/**
+		 * Detach the panel with the given name.
+		 */
+		public DetachPanel(name: string): IPanel {
+			if(this.Panels[name] === undefined)
+		        throw new UnknownPanelException();
+			this.Panels[name].PanelElement.detach();
+			var pn = this.Panels[name];
+			delete this.Panels[name];
+			return pn;
 		}
 		
 		/**
@@ -107,6 +141,15 @@ module Panels {
 		 */
 		public HasPanel(name: string): boolean {
 		    return (this.Panels[name] !== undefined);
+		}
+	}
+	
+	export class PanelGroupHelper {
+		/**
+		 * Check whether the given panel is not attached to another group.
+		 */
+		public static IsPanelAttachable(panel: IPanel): boolean{
+			return (panel.PanelElement.parent().length == 0);
 		}
 	}
 }

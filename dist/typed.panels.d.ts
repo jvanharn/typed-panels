@@ -607,6 +607,10 @@ declare module Panels {
         */
         AddPanel(panel: IPanel): void;
         /**
+        * Detach a panel by it's name and get the panel object.
+        */
+        DetachPanel(name: string): IPanel;
+        /**
         * Get a panel from the group by it's name.
         */
         GetPanel(name: string): IPanel;
@@ -638,9 +642,25 @@ declare module Panels {
         IsVisible(name: string): boolean;
     }
     interface IReferencedViewportPanelGroup extends IViewportPanelGroup {
+        /**
+        * Detach a panel from this group.
+        */
+        DetachPanelByReference(ref: PanelReference): IPanel;
+        /**
+        * Check if the panel with the given name is registered with this group.
+        */
         HasPanelByReference(ref: PanelReference): boolean;
+        /**
+        * Show a panel by its reference object.
+        */
         ShowByReference(ref: PanelReference): void;
+        /**
+        * Hide a panel by its reference.
+        */
         HideByReference(ref: PanelReference): void;
+        /**
+        * Check if a panel in this group is currently in the viewport.
+        */
         IsVisibleByReference(ref: PanelReference): boolean;
     }
     class PanelGroup extends Panel implements IPanelGroup {
@@ -652,6 +672,10 @@ declare module Panels {
         * Add an panel to the group.
         */
         public AddPanel(panel: IPanel): void;
+        /**
+        * Detach the panel with the given name.
+        */
+        public DetachPanel(name: string): IPanel;
         /**
         * Get a panel from the group by it's name.
         */
@@ -668,6 +692,12 @@ declare module Panels {
         * Check if the group has a panel with the specified name.
         */
         public HasPanel(name: string): boolean;
+    }
+    class PanelGroupHelper {
+        /**
+        * Check whether the given panel is not attached to another group.
+        */
+        static IsPanelAttachable(panel: IPanel): boolean;
     }
 }
 declare class UnknownPanelException extends KeyNotFoundException {
@@ -957,6 +987,8 @@ declare module Panels {
             public SetLabel(panelName: string, label: string): void;
             public Show(name: string): void;
             private FindTabByName(name);
+            public ShowTabs(): void;
+            public HideTabs(): void;
             /**
             * Render all the sub panels.
             */

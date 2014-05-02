@@ -329,11 +329,13 @@ module Panels {
 		 */
         public static IsLiftablePanel(obj: Object): boolean {
 			if(obj == undefined) return false;
-			if(typeof obj == 'function'){
+			return true;
+			// @todo Re-enable the code below and test it thoroughly.
+			/*if(typeof obj == 'function'){
 				return (typeof (<Function> obj).prototype['FillFromElement'] == 'function');
 			}else{
 				return (typeof obj['FillFromElement'] == 'function');
-			}
+			}*/
         }
         
 		public static FindElementWithRole(root: JQuery, role: string): JQuery {
