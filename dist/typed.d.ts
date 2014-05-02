@@ -1427,6 +1427,7 @@ declare module Panels {
             */
             public AddPanel(panel: IPanel): void;
             public AddTab(panel: IPanel, label: string): void;
+            public DetachPanel(name: string): IPanel;
             public SetLabel(panelName: string, label: string): void;
             public Show(name: string): void;
             private FindTabByName(name);

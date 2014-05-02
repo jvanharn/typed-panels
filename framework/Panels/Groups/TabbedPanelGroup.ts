@@ -31,6 +31,12 @@ module Panels {
     		            .click(e => this.Show(panel.PanelName)));
     		}
     		
+			public DetachPanel(name: string): IPanel {
+				var panel = this.GetPanel(panel);
+				this.TabsListElement.find("li[data-panelid="+ panel.PanelSeqId +"]").remove();
+				return super.DetachPanel(name);
+			}
+			
     		public SetLabel(panelName: string, label: string): void {
     		    this.FindTabByName(panelName).text(label);
     		}

@@ -2420,6 +2420,12 @@ var Panels;
                 }));
             };
 
+            TabbedPanelGroup.prototype.DetachPanel = function (name) {
+                var panel = this.GetPanel(panel);
+                this.TabsListElement.find("li[data-panelid=" + panel.PanelSeqId + "]").remove();
+                return _super.prototype.DetachPanel.call(this, name);
+            };
+
             TabbedPanelGroup.prototype.SetLabel = function (panelName, label) {
                 this.FindTabByName(panelName).text(label);
             };
