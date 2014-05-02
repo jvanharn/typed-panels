@@ -27,7 +27,7 @@ module Panels {
     		public AddTab(panel: IPanel, label: string): void {
     		    super.AddPanel(panel);
     		    this.TabsListElement.append(
-    		        jQuery("<li data-panelid=\""+ panel.PanelSeqId +"\">"+ panel.PanelName +"</li>")
+    		        jQuery("<li data-panelid=\""+ panel.PanelSeqId +"\">"+ (label == undefined ? panel.PanelName : label) +"</li>")
     		            .click(e => this.Show(panel.PanelName)));
     		}
     		

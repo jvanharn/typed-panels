@@ -2415,7 +2415,7 @@ var Panels;
             TabbedPanelGroup.prototype.AddTab = function (panel, label) {
                 var _this = this;
                 _super.prototype.AddPanel.call(this, panel);
-                this.TabsListElement.append(jQuery("<li data-panelid=\"" + panel.PanelSeqId + "\">" + panel.PanelName + "</li>").click(function (e) {
+                this.TabsListElement.append(jQuery("<li data-panelid=\"" + panel.PanelSeqId + "\">" + (label == undefined ? panel.PanelName : label) + "</li>").click(function (e) {
                     return _this.Show(panel.PanelName);
                 }));
             };
