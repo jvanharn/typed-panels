@@ -32,7 +32,7 @@ module Panels {
     		}
     		
 			public DetachPanel(name: string): IPanel {
-				var panel = this.GetPanel(panel);
+				var panel = this.GetPanel(name);
 				this.TabsListElement.find("li[data-panelid="+ panel.PanelSeqId +"]").remove();
 				return super.DetachPanel(name);
 			}
