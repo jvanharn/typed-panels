@@ -4,8 +4,8 @@ describe('Collections.IList', function(){
 			obj: Collections.List,
 			values: ['a', 'b', 'c', 'd']
 		},
-		'Collections.ArrayList': {
-			obj: Collections.ArrayList,
+		'Collections.Specialized.ArrayList': {
+			obj: Collections.Specialized.ArrayList,
 			values: ['a', 'b', 'c', 'd']
 		}
 	}, function(listData: any, listName: string){
@@ -179,14 +179,14 @@ describe('Collections.IList', function(){
 				fillList();
 				expect(list.Count).toBe(listData.values.length);
 				list.RemoveRange(1, listData.values.length-2);
-				expect(list.Count).toBe(listData.values.length-2);
+				expect(list.Count).toBe(2);
 			});
 
 			it('RemoveRange removes a range on the beginning of the list', function(){
 				fillList();
 				expect(list.Count).toBe(listData.values.length);
-				list.RemoveRange(0, listData.values.length-2);
-				expect(list.Count).toBe(listData.values.length-2);
+				list.RemoveRange(0, listData.values.length-1);
+				expect(list.Count).toBe(1);
 			});
 
 			it('RemoveRange removes a range on the end of the list', function(){

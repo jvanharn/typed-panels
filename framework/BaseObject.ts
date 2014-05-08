@@ -103,3 +103,11 @@ class ObjectType {
         return [];
     }
 }
+
+function applyTrait(targetClass: any, traits: any[]) {
+	traits.forEach(trait => {
+		Object.getOwnPropertyNames(trait.prototype).forEach(name => {
+			targetClass.prototype[name] = trait.prototype[name];
+		})
+	});
+}

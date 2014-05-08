@@ -108,6 +108,14 @@ var ObjectType = (function () {
     };
     return ObjectType;
 })();
+
+function applyTrait(targetClass, traits) {
+    traits.forEach(function (trait) {
+        Object.getOwnPropertyNames(trait.prototype).forEach(function (name) {
+            targetClass.prototype[name] = trait.prototype[name];
+        });
+    });
+}
 var Exception = (function () {
     function Exception(message) {
         this.name = 'Exception';
@@ -163,6 +171,7 @@ var RuntimeException = (function (_super) {
     return RuntimeException;
 })(Exception);
 
+//#region Method Exceptions
 var NotImplementedException = (function (_super) {
     __extends(NotImplementedException, _super);
     function NotImplementedException() {
@@ -171,6 +180,7 @@ var NotImplementedException = (function (_super) {
     }
     return NotImplementedException;
 })(RuntimeException);
+
 var AbstractMethodException = (function (_super) {
     __extends(AbstractMethodException, _super);
     function AbstractMethodException() {
@@ -180,6 +190,7 @@ var AbstractMethodException = (function (_super) {
     }
     return AbstractMethodException;
 })(NotImplementedException);
+
 var MethodNotOverwrittenException = (function (_super) {
     __extends(MethodNotOverwrittenException, _super);
     function MethodNotOverwrittenException() {
@@ -188,7 +199,8 @@ var MethodNotOverwrittenException = (function (_super) {
         this.message = 'This method\'s prototype should have been overwritten with the correct function, however, somehow it wasn\'t';
     }
     return MethodNotOverwrittenException;
-})(RuntimeException);
+})(NotImplementedException);
+
 var MethodNotAccessibleException = (function (_super) {
     __extends(MethodNotAccessibleException, _super);
     function MethodNotAccessibleException() {
@@ -198,13 +210,28 @@ var MethodNotAccessibleException = (function (_super) {
     return MethodNotAccessibleException;
 })(RuntimeException);
 
+//#endregion
+//#region Reference Exceptions
 var NullReferenceException = (function (_super) {
     __extends(NullReferenceException, _super);
     function NullReferenceException() {
         _super.apply(this, arguments);
         this.name = 'NullReferenceException';
+        this.message = 'Found a null\'ed value, where it had expected a valid value.';
     }
     return NullReferenceException;
+})(RuntimeException);
+
+//#endregion
+//#region Argument Exceptions
+var InvalidArgumentException = (function (_super) {
+    __extends(InvalidArgumentException, _super);
+    function InvalidArgumentException() {
+        _super.apply(this, arguments);
+        this.name = 'InvalidArgumentException';
+        this.message = 'The argument given to this method was invalid.';
+    }
+    return InvalidArgumentException;
 })(RuntimeException);
 
 var KeyNotFoundException = (function (_super) {
@@ -215,7 +242,8 @@ var KeyNotFoundException = (function (_super) {
         this.message = 'The key you gave was not found in this collection.';
     }
     return KeyNotFoundException;
-})(RuntimeException);
+})(InvalidArgumentException);
+
 var IndexOutOfBoundsException = (function (_super) {
     __extends(IndexOutOfBoundsException, _super);
     function IndexOutOfBoundsException() {
@@ -224,7 +252,8 @@ var IndexOutOfBoundsException = (function (_super) {
         this.message = 'The index given was less than 0 or larger than the length of this collection.';
     }
     return IndexOutOfBoundsException;
-})(RuntimeException);
+})(InvalidArgumentException);
+
 var DuplicateKeyException = (function (_super) {
     __extends(DuplicateKeyException, _super);
     function DuplicateKeyException() {
@@ -233,17 +262,8 @@ var DuplicateKeyException = (function (_super) {
         this.message = 'The key you wanted to add already exists on this collection.';
     }
     return DuplicateKeyException;
-})(RuntimeException);
-
-var InvalidArgumentException = (function (_super) {
-    __extends(InvalidArgumentException, _super);
-    function InvalidArgumentException() {
-        _super.apply(this, arguments);
-        this.name = 'InvalidArgumentException';
-        this.message = 'The argument given to this method was invalid.';
-    }
-    return InvalidArgumentException;
-})(RuntimeException);
+})(InvalidArgumentException);
+//#endregion
 var Guid = (function (_super) {
     __extends(Guid, _super);
     function Guid(_guid) {
@@ -359,6 +379,70 @@ var Collections;
         return SimpleEnumerator;
     })();
     Collections.SimpleEnumerator = SimpleEnumerator;
+})(Collections || (Collections = {}));
+/// <reference path="Enumerable.ts" />
+var Collections;
+(function (Collections) {
+    var Pair = (function (_super) {
+        __extends(Pair, _super);
+        function Pair(Value1, Value2) {
+            _super.call(this);
+            this.Value1 = Value1;
+            this.Value2 = Value2;
+        }
+        return Pair;
+    })(BaseObject);
+    Collections.Pair = Pair;
+    var Tuple = (function (_super) {
+        __extends(Tuple, _super);
+        function Tuple(Value1, Value2, Value3) {
+            _super.call(this);
+            this.Value1 = Value1;
+            this.Value2 = Value2;
+            this.Value3 = Value3;
+        }
+        return Tuple;
+    })(BaseObject);
+    Collections.Tuple = Tuple;
+    var Quadruple = (function (_super) {
+        __extends(Quadruple, _super);
+        function Quadruple(Value1, Value2, Value3, Value4) {
+            _super.call(this);
+            this.Value1 = Value1;
+            this.Value2 = Value2;
+            this.Value3 = Value3;
+            this.Value4 = Value4;
+        }
+        return Quadruple;
+    })(BaseObject);
+    Collections.Quadruple = Quadruple;
+    var Pentuple = (function (_super) {
+        __extends(Pentuple, _super);
+        function Pentuple(Value1, Value2, Value3, Value4, Value5) {
+            _super.call(this);
+            this.Value1 = Value1;
+            this.Value2 = Value2;
+            this.Value3 = Value3;
+            this.Value4 = Value4;
+            this.Value5 = Value5;
+        }
+        return Pentuple;
+    })(BaseObject);
+    Collections.Pentuple = Pentuple;
+})(Collections || (Collections = {}));
+var Collections;
+(function (Collections) {
+    var ArrayHelper = (function () {
+        function ArrayHelper() {
+        }
+        ArrayHelper.GetEnumerator = function (arr) {
+            if (arr == undefined)
+                throw new InvalidArgumentException();
+            return new Collections.SimpleEnumerator(arr);
+        };
+        return ArrayHelper;
+    })();
+    Collections.ArrayHelper = ArrayHelper;
 })(Collections || (Collections = {}));
 var Collections;
 (function (Collections) {
@@ -778,70 +862,10 @@ var Collections;
     })(Enumerable);
     Collections.Collection = Collection;
 })(Collections || (Collections = {}));
+/// <reference path="Collection.ts" />
 /// <reference path="Enumerable.ts" />
-var Collections;
-(function (Collections) {
-    var Pair = (function (_super) {
-        __extends(Pair, _super);
-        function Pair(Value1, Value2) {
-            _super.call(this);
-            this.Value1 = Value1;
-            this.Value2 = Value2;
-        }
-        return Pair;
-    })(BaseObject);
-    Collections.Pair = Pair;
-    var Tuple = (function (_super) {
-        __extends(Tuple, _super);
-        function Tuple(Value1, Value2, Value3) {
-            _super.call(this);
-            this.Value1 = Value1;
-            this.Value2 = Value2;
-            this.Value3 = Value3;
-        }
-        return Tuple;
-    })(BaseObject);
-    Collections.Tuple = Tuple;
-    var Quadruple = (function (_super) {
-        __extends(Quadruple, _super);
-        function Quadruple(Value1, Value2, Value3, Value4) {
-            _super.call(this);
-            this.Value1 = Value1;
-            this.Value2 = Value2;
-            this.Value3 = Value3;
-            this.Value4 = Value4;
-        }
-        return Quadruple;
-    })(BaseObject);
-    Collections.Quadruple = Quadruple;
-    var Pentuple = (function (_super) {
-        __extends(Pentuple, _super);
-        function Pentuple(Value1, Value2, Value3, Value4, Value5) {
-            _super.call(this);
-            this.Value1 = Value1;
-            this.Value2 = Value2;
-            this.Value3 = Value3;
-            this.Value4 = Value4;
-            this.Value5 = Value5;
-        }
-        return Pentuple;
-    })(BaseObject);
-    Collections.Pentuple = Pentuple;
-})(Collections || (Collections = {}));
-var Collections;
-(function (Collections) {
-    var ArrayHelper = (function () {
-        function ArrayHelper() {
-        }
-        ArrayHelper.GetEnumerator = function (arr) {
-            if (arr == undefined)
-                throw new InvalidArgumentException();
-            return new Collections.SimpleEnumerator(arr);
-        };
-        return ArrayHelper;
-    })();
-    Collections.ArrayHelper = ArrayHelper;
-})(Collections || (Collections = {}));
+/// <reference path="Linq.ts" />
+/// <reference path="../Exceptions.ts" />
 var Collections;
 (function (Collections) {
     /**
@@ -1088,133 +1112,11 @@ var Collections;
         return ListEnumerator;
     })();
     Collections.ListEnumerator = ListEnumerator;
-
-    /**
-    * List implementation based on an real array.
-    */
-    var ArrayList = (function (_super) {
-        __extends(ArrayList, _super);
-        function ArrayList() {
-            _super.apply(this, arguments);
-            /**
-            * @access protected
-            */
-            this.Items = [];
-        }
-        Object.defineProperty(ArrayList.prototype, "Count", {
-            get: function () {
-                return this.Items.length;
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        ArrayList.prototype.Add = function (item) {
-            if (item === undefined)
-                throw new InvalidArgumentException();
-            this.Items.push(item);
-        };
-
-        ArrayList.prototype.AddRange = function (collection) {
-            if (collection === undefined)
-                throw new InvalidArgumentException();
-            this.Items = this.Items.concat(Collections.Enumerable.CopyToArray(collection));
-        };
-
-        ArrayList.prototype.Remove = function (item) {
-            if (item === undefined)
-                throw new InvalidArgumentException();
-            var removed = false;
-            for (var i = 0; i < this.Items.length; i++) {
-                if (item == this.Items[i]) {
-                    this.Items.splice(i, 1);
-                    removed = true;
-                }
-            }
-            if (!removed)
-                throw new KeyNotFoundException();
-        };
-
-        ArrayList.prototype.RemoveRange = function (index, count) {
-            if (index === undefined || count === undefined)
-                throw new InvalidArgumentException();
-            if ((index < 0 || index >= this.Items.length) || (count < 0 || count > (this.Items.length - index)))
-                throw new IndexOutOfBoundsException();
-            this.Items.splice(index, count);
-        };
-
-        ArrayList.prototype.Clear = function () {
-            this.Items = [];
-        };
-
-        ArrayList.prototype.Contains = function (item) {
-            return (this.Items.indexOf(item) >= 0);
-        };
-
-        ArrayList.prototype.IndexOf = function (item) {
-            if (item === undefined)
-                throw new InvalidArgumentException();
-
-            return this.Items.indexOf(item);
-        };
-
-        ArrayList.prototype.ElementAt = function (index) {
-            if (index === undefined)
-                throw new InvalidArgumentException();
-            if (index < 0 || index >= this.Items.length)
-                throw new IndexOutOfBoundsException();
-
-            return this.Items[index];
-        };
-
-        ArrayList.prototype.Insert = function (index, item) {
-            if (index === undefined || item === undefined)
-                throw new InvalidArgumentException();
-            if (index < 0 || index > this.Items.length)
-                throw new IndexOutOfBoundsException();
-
-            this.Items.splice(index, 0, item);
-        };
-
-        ArrayList.prototype.InsertRange = function (index, collection) {
-            if (index === undefined || collection == undefined)
-                throw new InvalidArgumentException();
-            if (index < 0 || index > this.Items.length)
-                throw new IndexOutOfBoundsException();
-
-            var sliceAfter = this.Items.slice(index);
-            var sliceBefore = this.Items;
-            this.Items = sliceBefore.concat(Collections.Enumerable.CopyToArray(collection)).concat(sliceAfter);
-        };
-
-        ArrayList.prototype.RemoveAt = function (index) {
-            if (index === undefined)
-                throw new InvalidArgumentException();
-            if (index < 0 || index >= this.Items.length)
-                throw new IndexOutOfBoundsException();
-
-            this.Items.splice(index, 1);
-        };
-
-        ArrayList.prototype.CopyTo = function (collection) {
-            for (var i = 0; i < this.Items.length; i++) {
-                collection.Add(this.Items[i]);
-            }
-        };
-
-        ArrayList.prototype.GetEnumerator = function () {
-            return new Collections.SimpleEnumerator(this.Items);
-        };
-
-        ArrayList.prototype.GetNative = function () {
-            return this.Items;
-        };
-        return ArrayList;
-    })(Collections.Collection);
-    Collections.ArrayList = ArrayList;
 })(Collections || (Collections = {}));
 /// <reference path="Collection.ts" />
 /// <reference path="Enumerable.ts" />
+/// <reference path="Linq.ts" />
+/// <reference path="../Exceptions.ts" />
 /// <reference path="../../defs/lodash.d.ts" />
 var Collections;
 (function (Collections) {
@@ -1361,127 +1263,6 @@ var Collections;
     })(Collections.Collection);
     Collections.Dictionary = Dictionary;
 
-    // More limited in what it can store than a storage dictionary but much faster due to it's use of native arrays and thu faster when using direct acces, but still has all the extended properties.
-    var SearchDictionary = (function (_super) {
-        __extends(SearchDictionary, _super);
-        function SearchDictionary() {
-            _super.apply(this, arguments);
-            this._count = 0;
-            this.Items = {};
-        }
-        Object.defineProperty(SearchDictionary.prototype, "Count", {
-            get: function () {
-                return this._count;
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        Object.defineProperty(SearchDictionary.prototype, "Keys", {
-            get: function () {
-                return this.Items.Keys();
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        Object.defineProperty(SearchDictionary.prototype, "Values", {
-            get: function () {
-                return _.values(this.Items);
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        SearchDictionary.prototype.Get = function (key) {
-            return this.Items[key];
-        };
-
-        SearchDictionary.prototype.Set = function (key, value) {
-            if (this.Items[key] === undefined) {
-                this.Items[key] = value;
-                this._count++;
-            } else {
-                this.Items[key] = value;
-            }
-        };
-
-        SearchDictionary.prototype.Add = function (item) {
-            if (item === undefined)
-                throw new InvalidArgumentException();
-            if (item == null) {
-                //this.Items[''] = null;
-                console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
-            } else
-                this.Items[item.Key] = item.Value;
-            this._count++;
-        };
-
-        SearchDictionary.prototype.GetKey = function (value) {
-            for (var prop in this.Items) {
-                if (this.Items[prop] == value)
-                    return prop;
-            }
-        };
-
-        SearchDictionary.prototype.Clear = function () {
-            this.Items = {};
-            this._count = 0;
-        };
-
-        SearchDictionary.prototype.Contains = function (item) {
-            for (var key in this.Items) {
-                if (key == item.Key && this.Items[key] == item.Value)
-                    return true;
-            }
-            return false;
-        };
-
-        SearchDictionary.prototype.ContainsKey = function (key) {
-            return (key in this.Items);
-        };
-
-        SearchDictionary.prototype.Remove = function (obj) {
-            if (obj === undefined)
-                throw new InvalidArgumentException();
-            var removed = false;
-            if (obj instanceof KeyValuePair) {
-                for (var key in this.Items) {
-                    if (key == obj.Key && this.Items[key] == obj.Value) {
-                        delete this.Items[key];
-                        this._count--;
-                        removed = true;
-                    }
-                }
-            } else {
-                for (var key in this.Items) {
-                    if (this.Items[key] == obj) {
-                        delete this.Items[key];
-                        this._count--;
-                        removed = true;
-                    }
-                }
-            }
-            if (!removed)
-                throw new KeyNotFoundException();
-        };
-
-        SearchDictionary.prototype.CopyTo = function (collection) {
-            for (var key in this.Items)
-                collection.Add(new KeyValuePair(key, this.Items[key]));
-        };
-
-        SearchDictionary.prototype.GetNative = function () {
-            return this.Items;
-        };
-
-        SearchDictionary.prototype.GetEnumerator = function () {
-            return new SearchDictionaryEnumerator(this.Items);
-        };
-        return SearchDictionary;
-    })(Collections.Collection);
-    Collections.SearchDictionary = SearchDictionary;
-
     // Key value pair container, simplest of objects in TypeScript
     var KeyValuePair = (function () {
         function KeyValuePair(Key, Value) {
@@ -1492,12 +1273,16 @@ var Collections;
     })();
     Collections.KeyValuePair = KeyValuePair;
 
-    // Internal base enumerator class (Must be exported because the other class extends it, apparently)
-    var BaseDictionaryEnumerator = (function () {
-        function BaseDictionaryEnumerator() {
+    // Dictionary Iterator
+    var DictionaryEnumerator = (function () {
+        function DictionaryEnumerator(items) {
             this._index = 0;
+            if (items == undefined || items == null)
+                throw new InvalidArgumentException();
+            this.Items = items;
+            this.RefreshCurrent();
         }
-        Object.defineProperty(BaseDictionaryEnumerator.prototype, "Index", {
+        Object.defineProperty(DictionaryEnumerator.prototype, "Index", {
             get: function () {
                 return this._index;
             },
@@ -1505,52 +1290,6 @@ var Collections;
             configurable: true
         });
 
-        Object.defineProperty(BaseDictionaryEnumerator.prototype, "Current", {
-            get: function () {
-                throw new AbstractMethodException();
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        BaseDictionaryEnumerator.prototype.HasNext = function () {
-            throw new AbstractMethodException();
-        };
-
-        BaseDictionaryEnumerator.prototype.IsValid = function () {
-            throw new AbstractMethodException();
-        };
-
-        BaseDictionaryEnumerator.prototype.MoveNext = function () {
-            if (!this.HasNext())
-                return false;
-            this._index++;
-            this.RefreshCurrent();
-            return true;
-        };
-
-        BaseDictionaryEnumerator.prototype.Reset = function () {
-            this._index = 0;
-            this.RefreshCurrent();
-        };
-
-        BaseDictionaryEnumerator.prototype.RefreshCurrent = function () {
-            throw new AbstractMethodException();
-        };
-        return BaseDictionaryEnumerator;
-    })();
-    Collections.BaseDictionaryEnumerator = BaseDictionaryEnumerator;
-
-    // Dictionary Iterator
-    var DictionaryEnumerator = (function (_super) {
-        __extends(DictionaryEnumerator, _super);
-        function DictionaryEnumerator(items) {
-            _super.call(this);
-            if (items == undefined || items == null)
-                throw new InvalidArgumentException();
-            this.Items = items;
-            this.RefreshCurrent();
-        }
         Object.defineProperty(DictionaryEnumerator.prototype, "Current", {
             get: function () {
                 return this.Items[this.Index];
@@ -1558,6 +1297,19 @@ var Collections;
             enumerable: true,
             configurable: true
         });
+
+        DictionaryEnumerator.prototype.MoveNext = function () {
+            if (!this.HasNext())
+                return false;
+            this._index++;
+            this.RefreshCurrent();
+            return true;
+        };
+
+        DictionaryEnumerator.prototype.Reset = function () {
+            this._index = 0;
+            this.RefreshCurrent();
+        };
 
         DictionaryEnumerator.prototype.HasNext = function () {
             return (this.Index + 1 < this.Items.length);
@@ -1574,56 +1326,347 @@ var Collections;
             }
         };
         return DictionaryEnumerator;
-    })(BaseDictionaryEnumerator);
+    })();
     Collections.DictionaryEnumerator = DictionaryEnumerator;
-
-    // Optimized iterator for searchdictionary
-    var SearchDictionaryEnumerator = (function (_super) {
-        __extends(SearchDictionaryEnumerator, _super);
-        function SearchDictionaryEnumerator(items) {
-            _super.call(this);
-            if (items == undefined || items == null)
-                throw new InvalidArgumentException();
-            this.Items = items;
-            this.Keys = _.keys(this.Items);
-            this.RefreshCurrent();
-        }
-        Object.defineProperty(SearchDictionaryEnumerator.prototype, "Current", {
-            get: function () {
-                if (this.Keys.length > 0)
-                    return new KeyValuePair(this.Key, this.Value);
-                return undefined;
-            },
-            enumerable: true,
-            configurable: true
-        });
-
-        SearchDictionaryEnumerator.prototype.HasNext = function () {
-            return !(this.Keys[this.Index + 1] == undefined);
-        };
-
-        SearchDictionaryEnumerator.prototype.IsValid = function () {
-            return !(this.Keys[this.Index] == undefined);
-        };
-
-        SearchDictionaryEnumerator.prototype.RefreshCurrent = function () {
-            if (this.Keys.length > 0) {
-                this.Key = this.Keys[this.Index];
-                this.Value = this.Items[this.Keys[this.Index]];
-            }
-        };
-        return SearchDictionaryEnumerator;
-    })(BaseDictionaryEnumerator);
-    Collections.SearchDictionaryEnumerator = SearchDictionaryEnumerator;
 })(Collections || (Collections = {}));
 // This is a reference file, this just mitigates the problem that the typescript on-file compiler is horribly broken and compiles these files in the wrong order.
 /// <reference path="Enumerable.ts" />
-/// <reference path="Linq.ts" />
 /// <reference path="Collection.ts" />
 /// <reference path="Tuple.ts" />
 /// <reference path="Array.ts" />
 /// <reference path="List.ts" />
 /// <reference path="Dictionary.ts" />
+/// <reference path="Linq.ts" />
+/// <reference path="../Dictionary.ts" />
+var Collections;
+(function (Collections) {
+    (function (Specialized) {
+        /**
+        * More limited in what it can store than a storage dictionary but much faster due to it's use of native arrays and thu faster when using direct acces, but still has all the extended properties.
+        */
+        var StringDictionary = (function (_super) {
+            __extends(StringDictionary, _super);
+            function StringDictionary() {
+                _super.apply(this, arguments);
+                this._count = 0;
+                this.Items = {};
+            }
+            Object.defineProperty(StringDictionary.prototype, "Count", {
+                get: function () {
+                    return this._count;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(StringDictionary.prototype, "Keys", {
+                get: function () {
+                    return this.Items.Keys();
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(StringDictionary.prototype, "Values", {
+                get: function () {
+                    return _.values(this.Items);
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            StringDictionary.prototype.Get = function (key) {
+                return this.Items[key];
+            };
+
+            StringDictionary.prototype.Set = function (key, value) {
+                if (this.Items[key] === undefined) {
+                    this.Items[key] = value;
+                    this._count++;
+                } else {
+                    this.Items[key] = value;
+                }
+            };
+
+            StringDictionary.prototype.Add = function (item) {
+                if (item === undefined)
+                    throw new InvalidArgumentException();
+                if (item == null) {
+                    //this.Items[''] = null;
+                    console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
+                } else
+                    this.Items[item.Key] = item.Value;
+                this._count++;
+            };
+
+            StringDictionary.prototype.GetKey = function (value) {
+                for (var prop in this.Items) {
+                    if (this.Items[prop] == value)
+                        return prop;
+                }
+            };
+
+            StringDictionary.prototype.Clear = function () {
+                this.Items = {};
+                this._count = 0;
+            };
+
+            StringDictionary.prototype.Contains = function (item) {
+                for (var key in this.Items) {
+                    if (key == item.Key && this.Items[key] == item.Value)
+                        return true;
+                }
+                return false;
+            };
+
+            StringDictionary.prototype.ContainsKey = function (key) {
+                return (key in this.Items);
+            };
+
+            StringDictionary.prototype.Remove = function (obj) {
+                if (obj === undefined)
+                    throw new InvalidArgumentException();
+                var removed = false;
+                if (obj instanceof Collections.KeyValuePair) {
+                    for (var key in this.Items) {
+                        if (key == obj.Key && this.Items[key] == obj.Value) {
+                            delete this.Items[key];
+                            this._count--;
+                            removed = true;
+                        }
+                    }
+                } else {
+                    for (var key in this.Items) {
+                        if (this.Items[key] == obj) {
+                            delete this.Items[key];
+                            this._count--;
+                            removed = true;
+                        }
+                    }
+                }
+                if (!removed)
+                    throw new KeyNotFoundException();
+            };
+
+            StringDictionary.prototype.CopyTo = function (collection) {
+                for (var key in this.Items)
+                    collection.Add(new Collections.KeyValuePair(key, this.Items[key]));
+            };
+
+            StringDictionary.prototype.GetNative = function () {
+                return this.Items;
+            };
+
+            StringDictionary.prototype.GetEnumerator = function () {
+                return new StringDictionaryEnumerator(this.Items);
+            };
+            return StringDictionary;
+        })(Collections.Collection);
+        Specialized.StringDictionary = StringDictionary;
+
+        /**
+        * Optimized iterator for searchdictionary
+        */
+        var StringDictionaryEnumerator = (function () {
+            function StringDictionaryEnumerator(items) {
+                this._index = 0;
+                if (items == undefined || items == null)
+                    throw new InvalidArgumentException();
+                this.Items = items;
+                this.Keys = _.keys(this.Items);
+                this.RefreshCurrent();
+            }
+            Object.defineProperty(StringDictionaryEnumerator.prototype, "Index", {
+                get: function () {
+                    return this._index;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            Object.defineProperty(StringDictionaryEnumerator.prototype, "Current", {
+                get: function () {
+                    if (this.Keys.length > 0)
+                        return new Collections.KeyValuePair(this.Key, this.Value);
+                    return undefined;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            StringDictionaryEnumerator.prototype.MoveNext = function () {
+                if (!this.HasNext())
+                    return false;
+                this._index++;
+                this.RefreshCurrent();
+                return true;
+            };
+
+            StringDictionaryEnumerator.prototype.Reset = function () {
+                this._index = 0;
+                this.RefreshCurrent();
+            };
+
+            StringDictionaryEnumerator.prototype.HasNext = function () {
+                return !(this.Keys[this.Index + 1] == undefined);
+            };
+
+            StringDictionaryEnumerator.prototype.IsValid = function () {
+                return !(this.Keys[this.Index] == undefined);
+            };
+
+            StringDictionaryEnumerator.prototype.RefreshCurrent = function () {
+                if (this.Keys.length > 0) {
+                    this.Key = this.Keys[this.Index];
+                    this.Value = this.Items[this.Keys[this.Index]];
+                }
+            };
+            return StringDictionaryEnumerator;
+        })();
+        Specialized.StringDictionaryEnumerator = StringDictionaryEnumerator;
+    })(Collections.Specialized || (Collections.Specialized = {}));
+    var Specialized = Collections.Specialized;
+})(Collections || (Collections = {}));
+/// <reference path="../Collection.ts" />
+/// <reference path="../Enumerable.ts" />
+/// <reference path="../List.ts" />
+/// <reference path="../Linq.ts" />
+/// <reference path="../../Exceptions.ts" />
+var Collections;
+(function (Collections) {
+    (function (Specialized) {
+        /**
+        * List implementation based on a native JS Array.
+        */
+        var ArrayList = (function (_super) {
+            __extends(ArrayList, _super);
+            function ArrayList() {
+                _super.apply(this, arguments);
+                /**
+                * @access protected
+                */
+                this.Items = [];
+            }
+            Object.defineProperty(ArrayList.prototype, "Count", {
+                get: function () {
+                    return this.Items.length;
+                },
+                enumerable: true,
+                configurable: true
+            });
+
+            ArrayList.prototype.Add = function (item) {
+                if (item === undefined)
+                    throw new InvalidArgumentException();
+                this.Items.push(item);
+            };
+
+            ArrayList.prototype.AddRange = function (collection) {
+                if (collection === undefined)
+                    throw new InvalidArgumentException();
+                this.Items = this.Items.concat(Collections.Enumerable.CopyToArray(collection));
+            };
+
+            ArrayList.prototype.Remove = function (item) {
+                if (item === undefined)
+                    throw new InvalidArgumentException();
+                var removed = false;
+                for (var i = 0; i < this.Items.length; i++) {
+                    if (item == this.Items[i]) {
+                        this.Items.splice(i, 1);
+                        removed = true;
+                    }
+                }
+                if (!removed)
+                    throw new KeyNotFoundException();
+            };
+
+            ArrayList.prototype.RemoveRange = function (index, count) {
+                if (index === undefined || count === undefined)
+                    throw new InvalidArgumentException();
+                if ((index < 0 || index >= this.Items.length) || (count < 0 || count > (this.Items.length - index)))
+                    throw new IndexOutOfBoundsException();
+                this.Items.splice(index, count);
+            };
+
+            ArrayList.prototype.Clear = function () {
+                this.Items = [];
+            };
+
+            ArrayList.prototype.Contains = function (item) {
+                return (this.Items.indexOf(item) >= 0);
+            };
+
+            ArrayList.prototype.IndexOf = function (item) {
+                if (item === undefined)
+                    throw new InvalidArgumentException();
+
+                return this.Items.indexOf(item);
+            };
+
+            ArrayList.prototype.ElementAt = function (index) {
+                if (index === undefined)
+                    throw new InvalidArgumentException();
+                if (index < 0 || index >= this.Items.length)
+                    throw new IndexOutOfBoundsException();
+
+                return this.Items[index];
+            };
+
+            ArrayList.prototype.Insert = function (index, item) {
+                if (index === undefined || item === undefined)
+                    throw new InvalidArgumentException();
+                if (index < 0 || index > this.Items.length)
+                    throw new IndexOutOfBoundsException();
+
+                this.Items.splice(index, 0, item);
+            };
+
+            ArrayList.prototype.InsertRange = function (index, collection) {
+                if (index === undefined || collection == undefined)
+                    throw new InvalidArgumentException();
+                if (index < 0 || index > this.Items.length)
+                    throw new IndexOutOfBoundsException();
+
+                var sliceAfter = this.Items.slice(index);
+                var sliceBefore = this.Items;
+                this.Items = sliceBefore.concat(Collections.Enumerable.CopyToArray(collection)).concat(sliceAfter);
+            };
+
+            ArrayList.prototype.RemoveAt = function (index) {
+                if (index === undefined)
+                    throw new InvalidArgumentException();
+                if (index < 0 || index >= this.Items.length)
+                    throw new IndexOutOfBoundsException();
+
+                this.Items.splice(index, 1);
+            };
+
+            ArrayList.prototype.CopyTo = function (collection) {
+                for (var i = 0; i < this.Items.length; i++) {
+                    collection.Add(this.Items[i]);
+                }
+            };
+
+            ArrayList.prototype.GetEnumerator = function () {
+                return new Collections.SimpleEnumerator(this.Items);
+            };
+
+            ArrayList.prototype.GetNative = function () {
+                return this.Items;
+            };
+            return ArrayList;
+        })(Collections.Collection);
+        Specialized.ArrayList = ArrayList;
+    })(Collections.Specialized || (Collections.Specialized = {}));
+    var Specialized = Collections.Specialized;
+})(Collections || (Collections = {}));
+// This is a reference file, this just mitigates the problem that the typescript on-file compiler is horribly broken and compiles these files in the wrong order.
+/// <reference path="StringDictionary.ts" />
+/// <reference path="ArrayList.ts" />
+// This is a reference file, this just mitigates the problem that the typescript on-file compiler is horribly broken and compiles these files in the wrong order.
+/// <reference path="_baseinclude.ts" />
+/// <reference path="Specialized/_include.ts" />
 /// <reference path="../Collections/Dictionary.ts" />
 /// <reference path="../Collections/List.ts" />
 /// <reference path="../BaseObject.ts" />
@@ -3747,7 +3790,7 @@ var Panels;
                 }
             };
             return TabbedPanelGroup;
-        })(Panels.Groups.StackingPanelGroup);
+        })(Groups.StackingPanelGroup);
         Groups.TabbedPanelGroup = TabbedPanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -4131,7 +4174,7 @@ var Panels;
                 return new ResponsivePanelGroup(new (Function.prototype.bind.apply(viewportType, arguments)));
             };
             return ResponsivePanelGroup;
-        })(Panels.Groups.ManagedPanelGroup);
+        })(Groups.ManagedPanelGroup);
         Groups.ResponsivePanelGroup = ResponsivePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;
@@ -4150,7 +4193,7 @@ var Panels;
             ComposablePanelGroup.prototype.Compose = function (composition) {
             };
             return ComposablePanelGroup;
-        })(Panels.Groups.ManagedPanelGroup);
+        })(Groups.ManagedPanelGroup);
         Groups.ComposablePanelGroup = ComposablePanelGroup;
     })(Panels.Groups || (Panels.Groups = {}));
     var Groups = Panels.Groups;

@@ -35,8 +35,8 @@ describe('Collections.IEnumerator', function(){
 			],
 			emptyArray: []
 		},
-		'Collections.SearchDictionaryEnumerator': {
-			obj: Collections.SearchDictionaryEnumerator,
+		'Collections.Specialized.StringDictionaryEnumerator': {
+			obj: Collections.Specialized.StringDictionaryEnumerator,
 
 			firstExp: new Collections.KeyValuePair('first', 'a'),
 			secondExp: new Collections.KeyValuePair('second', 'b'),

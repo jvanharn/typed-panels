@@ -1,6 +1,9 @@
 /// <reference path="Collection.ts" />
 /// <reference path="Enumerable.ts" />
+/// <reference path="Linq.ts" />
+/// <reference path="../Exceptions.ts" />
 /// <reference path="../../defs/lodash.d.ts" />
+
 module Collections {
 	export interface IDictionary<TKey, TValue> extends ICollection<KeyValuePair<TKey, TValue>> {
 		Count: number;
@@ -143,114 +146,8 @@ module Collections {
 			return this.Items;
 		}
 		
-		public GetEnumerator(): IEnumerator<KeyValuePair<TKey, TValue>> {
+		public GetEnumerator(): IDictionaryEnumerator<TKey, TValue> {
 			return new DictionaryEnumerator<TKey, TValue>(this.Items);
-		}
-	}
-
-	// More limited in what it can store than a storage dictionary but much faster due to it's use of native arrays and thu faster when using direct acces, but still has all the extended properties.
-	export class SearchDictionary<TValue> extends Collection<KeyValuePair<string, TValue>> implements IDictionary<string, TValue> {
-		_count = 0;
-		Items: { [name: string]: TValue; } = {};
-		
-		get Count(): number {
-			return this._count;
-		}
-		
-		get Keys(): string[] {
-			return (<any> this.Items).Keys();
-		}
-		
-		get Values(): TValue[] {
-			return _.values(this.Items);
-		}
-
-		public Get(key: string): TValue {
-			return this.Items[key];
-		}
-		
-		public Set(key: string, value: TValue): void {
-			if(this.Items[key] === undefined){
-				this.Items[key] = value;
-				this._count++;
-			}else{
-				this.Items[key] = value;
-			}
-		}
-		
-		public Add(item: KeyValuePair<string, TValue>): void {
-			if(item === undefined)
-				throw new InvalidArgumentException();
-			if(item == null){ // we are expected to accept null values
-				//this.Items[''] = null;
-				console.warn('It probably isn\'t smart to add Null values to a Dictionary. Maybe you\'d want to change your application to check for those kinds of values?');
-			}else
-				this.Items[item.Key] = item.Value;
-			this._count++;
-		}
-		
-		public GetKey(value: TValue): string {
-		    for(var prop in this.Items){
-		        if(this.Items[prop] == value)
-		            return prop;
-		    }
-		}
-		
-		public Clear(): void {
-			this.Items = {};
-			this._count = 0;
-		}
-		
-		public Contains(item: KeyValuePair<string, TValue>): boolean {
-			for(var key in this.Items){
-				if(key == item.Key && this.Items[key] == item.Value)
-					return true;
-			}
-			return false;
-		}
-		
-		public ContainsKey(key: string): boolean {
-			return (key in this.Items);
-		}
-		
-		public Remove(item: KeyValuePair<string, TValue>): void;
-		public Remove(key: string): void;
-		public Remove(obj: any): void {
-			if(obj === undefined)
-				throw new InvalidArgumentException();
-			var removed = false;
-		    if(obj instanceof KeyValuePair){ // KVP
-		        for(var key in this.Items){
-		            if(key == obj.Key && this.Items[key] == obj.Value){
-		                delete this.Items[key];
-						this._count--;
-						removed = true;
-					}
-		        }
-		    } else { // Key
-    			for(var key in this.Items){
-    				if(this.Items[key] == obj){
-    					delete this.Items[key];
-						this._count--;
-						removed = true;
-					}
-    			}
-		    }
-			if(!removed)
-				throw new KeyNotFoundException();
-		}
-		
-		public CopyTo(collection: ICollection<KeyValuePair<string, TValue>>): void {
-			for(var key in this.Items)
-				collection.Add(new KeyValuePair<string, TValue>(key, this.Items[key]));
-		}
-		
-		public GetNative(): any {
-			return this.Items;
-		}
-		
-		public GetEnumerator(): IEnumerator<KeyValuePair<string, TValue>> {
-			return new SearchDictionaryEnumerator<TValue>(this.Items);
 		}
 	}
 
@@ -259,22 +156,29 @@ module Collections {
 		constructor(public Key: TKey, public Value: TValue) { }
 	}
 
-	// Internal base enumerator class (Must be exported because the other class extends it, apparently)
-	export class BaseDictionaryEnumerator<TKey, TValue> implements IDictionaryEnumerator<TKey, TValue> {
-		_index = 0;
+	// Dictionary Iterator
+	export class DictionaryEnumerator<TKey, TValue> implements IDictionaryEnumerator<TKey, TValue> {
+		private _index = 0;
+		private Items: KeyValuePair<TKey, TValue>[];
+
 		public Key: TKey;
 		public Value: TValue;
-		
+
 		get Index(): number {
 			return this._index;
 		}
-		
-		get Current(): KeyValuePair<TKey, TValue> { throw new AbstractMethodException(); }
 
-		public HasNext(): boolean { throw new AbstractMethodException(); }
+		get Current(): KeyValuePair<TKey, TValue> {
+			return this.Items[this.Index];
+		}
 		
-		public IsValid(): boolean { throw new AbstractMethodException(); }
-		
+		public constructor(items: KeyValuePair<TKey, TValue>[]) {
+			if(items == undefined || items == null)
+				throw new InvalidArgumentException();
+			this.Items = items;
+			this.RefreshCurrent();
+		}
+
 		public MoveNext(): boolean {
 			if(!this.HasNext())
 				return false;
@@ -282,31 +186,12 @@ module Collections {
 			this.RefreshCurrent();
 			return true;
 		}
-		
+
 		public Reset(): void {
 			this._index = 0;
 			this.RefreshCurrent();
 		}
-		
-		RefreshCurrent(): void { throw new AbstractMethodException(); }
-	}
-	
-	// Dictionary Iterator
-	export class DictionaryEnumerator<TKey, TValue> extends BaseDictionaryEnumerator<TKey, TValue> {
-		private Items: KeyValuePair<TKey, TValue>[]
 
-		get Current(): KeyValuePair<TKey, TValue> {
-			return this.Items[this.Index];
-		}
-		
-		public constructor(items: KeyValuePair<TKey, TValue>[]) {
-			super();
-			if(items == undefined || items == null)
-				throw new InvalidArgumentException();
-			this.Items = items;
-			this.RefreshCurrent();
-		}
-        
         public HasNext(): boolean {
 			return (this.Index+1 < this.Items.length);
 		}
@@ -315,46 +200,10 @@ module Collections {
 			return (this.Index < this.Items.length);
 		}
         
-		RefreshCurrent(): void {
+		private RefreshCurrent(): void {
 			if(this.Items.length > 0){
 				this.Key = this.Current.Key;
 				this.Value = this.Current.Value;
-			}
-		}
-	}
-
-	// Optimized iterator for searchdictionary
-	export class SearchDictionaryEnumerator<TValue> extends BaseDictionaryEnumerator<string, TValue> {
-		private Keys: string[];
-		private Items: { [name: string]: TValue; }
-
-		get Current(): KeyValuePair<string, TValue> {
-			if(this.Keys.length > 0)
-				return new KeyValuePair<string, TValue>(this.Key, this.Value);
-			return undefined;
-		}
-		
-		public constructor(items: { [name: string]: TValue; }) {
-			super();
-			if(items == undefined || items == null)
-				throw new InvalidArgumentException();
-			this.Items = items;
-			this.Keys = _.keys((<any> this.Items));
-			this.RefreshCurrent();
-		}
-		
-		public HasNext(): boolean {
-			return !(this.Keys[this.Index+1] == undefined);
-		}
-		
-		public IsValid(): boolean {
-			return !(this.Keys[this.Index] == undefined);
-		}
-		
-		RefreshCurrent(): void{
-			if(this.Keys.length > 0) {
-				this.Key = this.Keys[this.Index];
-				this.Value = this.Items[this.Keys[this.Index]];
 			}
 		}
 	}

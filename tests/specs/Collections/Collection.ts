@@ -4,8 +4,8 @@ describe('Collections.ICollection', function(){
 			obj: Collections.List,
 			values: ['a', 'b', 'c', 'd']
 		},
-		'Collections.ArrayList': {
-			obj: Collections.ArrayList,
+		'Collections.Specialized.ArrayList': {
+			obj: Collections.Specialized.ArrayList,
 			values: ['a', 'b', 'c', 'd']
 		},
 		'Collections.Dictionary': {
@@ -17,8 +17,8 @@ describe('Collections.ICollection', function(){
 				new Collections.KeyValuePair('fourth', 'd')
 			]
 		},
-		'Collections.SearchDictionary': {
-			obj: Collections.SearchDictionary,
+		'Collections.Specialized.SearchDictionary': {
+			obj: Collections.Specialized.StringDictionary,
 			values: [
 				new Collections.KeyValuePair('first', 'a'),
 				new Collections.KeyValuePair('second', 'b'),
@@ -56,13 +56,13 @@ describe('Collections.ICollection', function(){
 				expect(collection.Count).toBe(0);
 			});
 
-			it('the Add method accepts null values', function(){
+			it('Add accepts null values', function(){
 				expect(function(){
 					collection.Add(null);
 				}).not.toThrow(new InvalidArgumentException);
 			});
 
-			it('the Add method does not accept undefined values', function(){
+			it('Add does not accept undefined values', function(){
 				expect(collection.Add).toThrow(new InvalidArgumentException);
 			});
 
@@ -74,14 +74,14 @@ describe('Collections.ICollection', function(){
 				}).toThrow(new DuplicateKeyException);
 			});*/
 
-			it('the Contains method returns true for existing elements', function(){
+			it('Contains returns true for existing elements', function(){
 				collection.Add(collData.values[0]);
 				collection.Add(collData.values[1]);
 				collection.Add(collData.values[2]);
 				expect(collection.Contains(collData.values[1])).toBeTrue();
 			});
 
-			it('the Contains method returns false for non-existing elements', function(){
+			it('Contains returns false for non-existing elements', function(){
 				collection.Add(collData.values[0]);
 				collection.Add(collData.values[1]);
 				collection.Add(collData.values[2]);
@@ -123,7 +123,7 @@ describe('Collections.ICollection', function(){
 				}*/
 			});
 
-			it('the GetNative method always returns some sort of object', function(){
+			it('GetNative always returns some sort of object', function(){
 				expect(collection.GetNative()).toBeDefined();
 			});
 		});

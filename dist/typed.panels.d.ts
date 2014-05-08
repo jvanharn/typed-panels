@@ -58,6 +58,7 @@ declare class ObjectType {
     public GetProperties(): string[];
     public GetMethods(): string[];
 }
+declare function applyTrait(targetClass: any, traits: any[]): void;
 interface IComparer<T> {
     Compare(a: T, b: T): number;
 }
@@ -91,7 +92,7 @@ declare class AbstractMethodException extends NotImplementedException {
     public name: string;
     public message: string;
 }
-declare class MethodNotOverwrittenException extends RuntimeException {
+declare class MethodNotOverwrittenException extends NotImplementedException {
     public name: string;
     public message: string;
 }
@@ -100,20 +101,21 @@ declare class MethodNotAccessibleException extends RuntimeException {
 }
 declare class NullReferenceException extends RuntimeException {
     public name: string;
-}
-declare class KeyNotFoundException extends RuntimeException {
-    public name: string;
-    public message: string;
-}
-declare class IndexOutOfBoundsException extends RuntimeException {
-    public name: string;
-    public message: string;
-}
-declare class DuplicateKeyException extends RuntimeException {
-    public name: string;
     public message: string;
 }
 declare class InvalidArgumentException extends RuntimeException {
+    public name: string;
+    public message: string;
+}
+declare class KeyNotFoundException extends InvalidArgumentException {
+    public name: string;
+    public message: string;
+}
+declare class IndexOutOfBoundsException extends InvalidArgumentException {
+    public name: string;
+    public message: string;
+}
+declare class DuplicateKeyException extends InvalidArgumentException {
     public name: string;
     public message: string;
 }
@@ -156,6 +158,50 @@ declare module Collections {
         public HasNext(): boolean;
         public IsValid(): boolean;
         public Reset(): void;
+    }
+}
+declare module Collections {
+    interface ICollection<T> extends IEnumerable<T> {
+        Count: number;
+        Add(item: T): void;
+        Clear(): void;
+        Contains(item: T): boolean;
+        Remove(item: T): void;
+        CopyTo(collection: ICollection<T>): void;
+        GetNative(): any;
+    }
+}
+declare module Collections {
+    class Pair<T1, T2> extends BaseObject {
+        public Value1: T1;
+        public Value2: T2;
+        constructor(Value1: T1, Value2: T2);
+    }
+    class Tuple<T1, T2, T3> extends BaseObject {
+        public Value1: T1;
+        public Value2: T2;
+        public Value3: T3;
+        constructor(Value1: T1, Value2: T2, Value3: T3);
+    }
+    class Quadruple<T1, T2, T3, T4> extends BaseObject {
+        public Value1: T1;
+        public Value2: T2;
+        public Value3: T3;
+        public Value4: T4;
+        constructor(Value1: T1, Value2: T2, Value3: T3, Value4: T4);
+    }
+    class Pentuple<T1, T2, T3, T4, T5> extends BaseObject {
+        public Value1: T1;
+        public Value2: T2;
+        public Value3: T3;
+        public Value4: T4;
+        public Value5: T5;
+        constructor(Value1: T1, Value2: T2, Value3: T3, Value4: T4, Value5: T5);
+    }
+}
+declare module Collections {
+    class ArrayHelper {
+        static GetEnumerator<T>(arr: T[]): IEnumerator<T>;
     }
 }
 declare module Collections {
@@ -294,50 +340,6 @@ declare module Collections {
     }
 }
 declare module Collections {
-    interface ICollection<T> extends IEnumerable<T> {
-        Count: number;
-        Add(item: T): void;
-        Clear(): void;
-        Contains(item: T): boolean;
-        Remove(item: T): void;
-        CopyTo(collection: ICollection<T>): void;
-        GetNative(): any;
-    }
-}
-declare module Collections {
-    class Pair<T1, T2> extends BaseObject {
-        public Value1: T1;
-        public Value2: T2;
-        constructor(Value1: T1, Value2: T2);
-    }
-    class Tuple<T1, T2, T3> extends BaseObject {
-        public Value1: T1;
-        public Value2: T2;
-        public Value3: T3;
-        constructor(Value1: T1, Value2: T2, Value3: T3);
-    }
-    class Quadruple<T1, T2, T3, T4> extends BaseObject {
-        public Value1: T1;
-        public Value2: T2;
-        public Value3: T3;
-        public Value4: T4;
-        constructor(Value1: T1, Value2: T2, Value3: T3, Value4: T4);
-    }
-    class Pentuple<T1, T2, T3, T4, T5> extends BaseObject {
-        public Value1: T1;
-        public Value2: T2;
-        public Value3: T3;
-        public Value4: T4;
-        public Value5: T5;
-        constructor(Value1: T1, Value2: T2, Value3: T3, Value4: T4, Value5: T5);
-    }
-}
-declare module Collections {
-    class ArrayHelper {
-        static GetEnumerator<T>(arr: T[]): IEnumerator<T>;
-    }
-}
-declare module Collections {
     interface IList<T> extends ICollection<T> {
         ElementAt(index: number): T;
         AddRange(collection: IEnumerable<T>): void;
@@ -387,30 +389,6 @@ declare module Collections {
         public IsValid(): boolean;
         public Reset(): void;
     }
-    /**
-    * List implementation based on an real array.
-    */
-    class ArrayList<T> extends Collection<T> implements IList<T> {
-        /**
-        * @access protected
-        */
-        public Items: T[];
-        public Count : number;
-        public Add(item: T): void;
-        public AddRange(collection: IEnumerable<T>): void;
-        public Remove(item: T): void;
-        public RemoveRange(index: number, count: number): void;
-        public Clear(): void;
-        public Contains(item: T): boolean;
-        public IndexOf(item: T): number;
-        public ElementAt(index: number): T;
-        public Insert(index: number, item: T): void;
-        public InsertRange(index: number, collection: IEnumerable<T>): void;
-        public RemoveAt(index: number): void;
-        public CopyTo(collection: ICollection<T>): void;
-        public GetEnumerator(): IEnumerator<T>;
-        public GetNative(): any;
-    }
 }
 declare module Collections {
     interface IDictionary<TKey, TValue> extends ICollection<KeyValuePair<TKey, TValue>> {
@@ -445,64 +423,26 @@ declare module Collections {
         public Remove(key: TKey): void;
         public CopyTo(collection: ICollection<KeyValuePair<TKey, TValue>>): void;
         public GetNative(): any;
-        public GetEnumerator(): IEnumerator<KeyValuePair<TKey, TValue>>;
-    }
-    class SearchDictionary<TValue> extends Collection<KeyValuePair<string, TValue>> implements IDictionary<string, TValue> {
-        public _count: number;
-        public Items: {
-            [name: string]: TValue;
-        };
-        public Count : number;
-        public Keys : string[];
-        public Values : TValue[];
-        public Get(key: string): TValue;
-        public Set(key: string, value: TValue): void;
-        public Add(item: KeyValuePair<string, TValue>): void;
-        public GetKey(value: TValue): string;
-        public Clear(): void;
-        public Contains(item: KeyValuePair<string, TValue>): boolean;
-        public ContainsKey(key: string): boolean;
-        public Remove(item: KeyValuePair<string, TValue>): void;
-        public Remove(key: string): void;
-        public CopyTo(collection: ICollection<KeyValuePair<string, TValue>>): void;
-        public GetNative(): any;
-        public GetEnumerator(): IEnumerator<KeyValuePair<string, TValue>>;
+        public GetEnumerator(): IDictionaryEnumerator<TKey, TValue>;
     }
     class KeyValuePair<TKey, TValue> {
         public Key: TKey;
         public Value: TValue;
         constructor(Key: TKey, Value: TValue);
     }
-    class BaseDictionaryEnumerator<TKey, TValue> implements IDictionaryEnumerator<TKey, TValue> {
-        public _index: number;
+    class DictionaryEnumerator<TKey, TValue> implements IDictionaryEnumerator<TKey, TValue> {
+        private _index;
+        private Items;
         public Key: TKey;
         public Value: TValue;
         public Index : number;
         public Current : KeyValuePair<TKey, TValue>;
-        public HasNext(): boolean;
-        public IsValid(): boolean;
+        constructor(items: KeyValuePair<TKey, TValue>[]);
         public MoveNext(): boolean;
         public Reset(): void;
-        public RefreshCurrent(): void;
-    }
-    class DictionaryEnumerator<TKey, TValue> extends BaseDictionaryEnumerator<TKey, TValue> {
-        private Items;
-        public Current : KeyValuePair<TKey, TValue>;
-        constructor(items: KeyValuePair<TKey, TValue>[]);
         public HasNext(): boolean;
         public IsValid(): boolean;
-        public RefreshCurrent(): void;
-    }
-    class SearchDictionaryEnumerator<TValue> extends BaseDictionaryEnumerator<string, TValue> {
-        private Keys;
-        private Items;
-        public Current : KeyValuePair<string, TValue>;
-        constructor(items: {
-            [name: string]: TValue;
-        });
-        public HasNext(): boolean;
-        public IsValid(): boolean;
-        public RefreshCurrent(): void;
+        private RefreshCurrent();
     }
 }
 declare module Panels {

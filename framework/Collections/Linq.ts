@@ -87,7 +87,7 @@ module Collections {
 		 */
 		ToDictionary<TKey, TValue>(keyExtractor: (item: T) => TKey, valueExtractor: (item: T) => TValue, dict?: IDictionary<TKey, TValue>): IDictionary<TKey, TValue>;
 	}
-	
+
 	/**
 	 * Simple and fast Linq extensions
 	 */
