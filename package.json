@@ -12,7 +12,9 @@
   },
   "main"                 : "dist/typed.js",
   "dependencies"         : {
-    "lodash"             : ">=2.4.1",
-    "underscore.string"  : ">=1.9"
+    "lodash"             : ">=2.4.1"
+  },
+  "directories"          : {
+	"lib": "./dist"
   }
 }
