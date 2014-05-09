@@ -12,7 +12,8 @@
   },
   "main"                 : "dist/typed.js",
   "dependencies"         : {
-    "lodash"             : ">=2.4.1"
+    "lodash"             : ">=2.4.1",
+	"jquery"             : ">=1.9"
   },
   "directories"          : {
 	"lib": "./dist"
