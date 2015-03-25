@@ -13,7 +13,8 @@
   "main"                 : "dist/typed.js",
   "dependencies"         : {
     "lodash"             : ">=2.4.1",
-	"jquery"             : ">=1.9"
+	"jquery"             : ">=1.9",
+	"es6-promise"        : ">=2.0.0"
   },
   "directories"          : {
 	"lib": "./dist"

@@ -8,7 +8,7 @@ var __extends = this.__extends || function (d, b) {
 var SimpleViewModel = (function (_super) {
     __extends(SimpleViewModel, _super);
     function SimpleViewModel(options) {
-        if (typeof options === "undefined") { options = {}; }
+        if (options === void 0) { options = {}; }
         _super.call(this, null, options);
         this.id = null;
         this.Greeting = null;
@@ -20,25 +20,20 @@ var ApplicationGroup = (function (_super) {
     __extends(ApplicationGroup, _super);
     function ApplicationGroup() {
         _super.call(this);
-
         var firstModel = new SimpleViewModel();
         firstModel.Greeting = 'first tab.';
-
         // The boolean sets whether the panel should rerender when the model changes,
         // ..the second argument sets the model that will set the greeting for our panel.
         this.FirstGreetingPanel = new GreetingPanel(true, firstModel);
         this.FirstGreetingPanel.PanelName = 'firstpanel';
         this.AddPanel(this.FirstGreetingPanel);
-
         var secondModel = new SimpleViewModel();
         secondModel.Greeting = 'second tab =D';
         this.SecondGreetingPanel = new GreetingPanel(true, secondModel);
         this.SecondGreetingPanel.PanelName = 'secondpanel';
         this.AddPanel(this.SecondGreetingPanel);
-
         this.FirstGreetingPanel.Render();
         this.SecondGreetingPanel.Render();
-
         this.Show(this.FirstGreetingPanel.PanelName);
     }
     ApplicationGroup.prototype.SwitchPanel = function (panel) {
@@ -80,11 +75,9 @@ var Application = (function (_super) {
         var _this = this;
         _super.call(this);
         this._container = _container;
-
         this.MainGroup = new ApplicationGroup();
         this._container.append(this.MainGroup.PanelElement);
         this.MainGroup.Render();
-
         $('#firstlist-selector').click(function () {
             _this.MainGroup.SwitchPanel('firstpanel');
         });
@@ -104,7 +97,6 @@ var Application = (function (_super) {
     Application._instance = null;
     return Application;
 })(BaseObject);
-
 // Initialize/Bootstrap application
 TemplateFactory.ViewBasePath = 'application/Views/';
 $(document).ready(function () {

@@ -9,3 +9,5 @@ call tsc --out dist/typed.panels.js -d -t ES5 make-stripped.ts
 call ajaxmin dist/typed.panels.js -o dist/typed.panels.min.js -clobber
 
 echo Done!
+
+pause

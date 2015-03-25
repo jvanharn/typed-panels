@@ -105,7 +105,7 @@ module Collections {
 			if(index < 0 || index > this._length)
 				throw new IndexOutOfBoundsException();
 
-		    var elements = Enumerable.CopyToArray(collection);
+		    var elements = Enumerable.CopyToArray(<any> collection);
 		    this._makeGap(index, elements.length);
 		    for(var i=0; i<elements.length; i++){
 		        this[i] = elements[i];
@@ -133,6 +133,17 @@ module Collections {
 
 			this._fixIndex();
 		}
+
+		public MoveElementTo(indexFrom: number, indexTo: number): void {
+			if(indexFrom > this._length || indexFrom < 0)
+				throw new Error('List; IndexFrom out of bounds.');
+			if(indexTo > this._length || indexTo < 0)
+				throw new Error('List; IndexTo out of bounds.');
+
+			var elem = this.ElementAt(indexFrom);
+			this.RemoveAt(indexFrom);
+			this.Insert(indexTo, elem);
+		}
 		
 		public CopyTo(collection: ICollection<T>): void {
 		    for(var i=0; i<this._length; i++){
@@ -154,16 +165,15 @@ module Collections {
 		/**
 		 * This makes sure that there are no gaps between indices after altering the elements in a list.
 		 */
-		private _fixIndex(): void {
+		protected _fixIndex(): void {
 		    var removed = 0;
 	        var removalStart: number = -1;
 			var total = this._length;
 	        for(var i=0; i<total; i++){
 	            if(this[i] === undefined && this[i+1] === undefined){
-	                if(removalStart >= 0)
-	                    continue;
-	                else
+	                if(removalStart < 0)
 	                    removalStart = i;
+					//else continue;
 	            }else if(removalStart >= 0 && this[i] !== undefined){
 	                var rem = this._removeGap(removalStart, (i-1));
 					removed += rem;
@@ -180,7 +190,7 @@ module Collections {
 	        this._length -= removed;
 		}
 		
-		private _removeGap(gapStart: number, gapEnd: number): number {
+		protected _removeGap(gapStart: number, gapEnd: number): number {
 			// fill gap
 			var gapSize = (gapEnd-gapStart)+1;
 			var gapPos = 1;
@@ -196,7 +206,7 @@ module Collections {
 			return gapSize;
 		}
 		
-		private _makeGap(gapStart: number, gapLength: number): void{
+		protected _makeGap(gapStart: number, gapLength: number): void{
 		    // Copy values after gapStart to object an delete originals
 		    var tmp = {};
 		    for(var i=0; i<(this._length-gapStart); i++){

@@ -1,4 +1,6 @@
-/// <reference path="panel.ts" />
+/// <reference path="Panel.ts" />
+/// <reference path="Utils/PanelReference.ts" />
+
 module Panels {
     export interface IPanelGroup extends IPanel {
         /**
@@ -156,5 +158,5 @@ module Panels {
 
 class UnknownPanelException extends KeyNotFoundException {
     public name = 'UnknownPanelException';
-    public message = 'The given panel is not registred with this group or by that name.';
+    public message = 'The given panel is not registered with this group or by that name.';
 }

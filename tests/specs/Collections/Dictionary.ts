@@ -24,9 +24,9 @@ describe('Collections.IDictionary', function(){
 
 			var fillDictionary = function(){
 				for(var i=0; i<dictData.values.length; i++){
-					dictionary.Add(dictData.values[i]);
+					(<any> dictionary).Add(dictData.values[i]);
 				}
-			}
+			};
 
 			beforeEach(function(){
 				dictionary = new dictData.obj();

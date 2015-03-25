@@ -16,7 +16,7 @@ describe('Collections.IList', function(){
 				for(var i=0; i<listData.values.length; i++){
 					list.Add(listData.values[i]);
 				}
-			}
+			};
 
 			beforeEach(function(){
 				list = new listData.obj();

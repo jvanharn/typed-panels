@@ -1,4 +1,8 @@
+/// <reference path="../../Exceptions.ts" />
+/// <reference path="../../BaseObject.ts" />
 /// <reference path="../../EqualityComparer.ts" />
+/// <reference path="../Panel.ts" />
+/// <reference path="../PanelGroup.ts" />
 
 module Panels {
     /**

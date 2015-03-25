@@ -3,6 +3,7 @@ declare module jasmine {
 		toBeFalse(): boolean;
 		toBeTrue(): boolean;
 		toBeSameEnumValue(expected: any): boolean;
+		toBeEnumerable(expected: any[]): boolean;
 	}
 }
 
@@ -23,6 +24,29 @@ beforeEach(function() {
 				}
 			};
 		},*/
+		toBeEnumerable: function(){
+			return {
+				compare: function(actual, expected){
+					var e = (<Collections.IEnumerable<any>> actual).GetEnumerator();
+					var i = 0;
+					var correct = true;
+					do {
+						if(e.Current != expected[i]) {
+							correct = false;
+							break;
+						}
+						i++;
+					} while(e.MoveNext());
+					if(i !== expected.length)
+						correct = false;
+
+					return {
+						pass: correct,
+						message: 'expected result ['+Collections.Enumerable.CopyToArray(actual).join(', ')+'] to be like the array ['+expected.join(', ')+']'
+					};
+				}
+			};
+		},
 
 		toBeFalse: function(){
 			return {

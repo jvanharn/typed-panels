@@ -36,7 +36,17 @@ module Collections {
 		 * Convert the elements of this collection into another form/type.
 		 */
 		Select<TResult>(predictate: (item: T) => TResult): Enumerable<TResult>;
-		
+
+		/**
+		 * Sort the given enumerable by selecting the key to use for the ordering.
+		 */
+		OrderBy<TElement, TKey>(keySelector: (item: TElement) => TKey): OrderedEnumerable<TElement>;
+
+		/**
+		 * Sort the given enumerable by selecting the key to use for sorting and a comparator for the item comparison.
+		 */
+		OrderBy<TElement, TKey>(keySelector: (item: TElement) => TKey, comparer: (leftItem: TKey, rightItem: TKey) => number): OrderedEnumerable<TElement>;
+
 		/**
 		 * Group the elements in this collection into different keys.
 		 */
@@ -94,21 +104,26 @@ module Collections {
 	export class Enumerable<T> implements IEnumerable<T> {
 	    // Return false to cancel, return true to continue, return null to.. nothing.
 	    public Each(callback: (item: T) => void): void {
+			if(typeof callback !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
 	        var e = this.GetEnumerator();
 			if(e.Current == undefined)
 		        return;
 			do {
 				callback(e.Current);
-			} while(e.MoveNext())
+			} while(e.MoveNext());
 	    }
 	    
 	    public BreakableEach(callback: (item: T, e: IEnumerator<T>) => boolean): void {
+			if(typeof callback !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
 	        var e = this.GetEnumerator();
 			if(e.Current == undefined)
 		        return;
 			do {
-				callback(e.Current, e);
-			} while(e.MoveNext())
+				if(callback(e.Current, e) === false)
+					break;
+			} while(e.MoveNext());
 	    }
 	    
 	    /**
@@ -116,6 +131,8 @@ module Collections {
 	     * Returns false for empty collections.
 	     */
 	    public Any(predictate: (item: T) => boolean): boolean {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
 	        var e = this.GetEnumerator();
 			if(e.Current == undefined)
 		        return false;
@@ -131,6 +148,8 @@ module Collections {
 	     * Returns true for empty collections.
 	     */
 	    public All(predictate: (item: T) => boolean): boolean {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
 	        var e = this.GetEnumerator();
 			if(e.Current == undefined)
 		        return true;
@@ -142,17 +161,23 @@ module Collections {
 	    }
 	    
 		public ContainsDeep<TItem>(item: TItem, extractor: (item: T) => TItem): boolean {
+			if(typeof extractor !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
+
 			var e = this.GetEnumerator();
 			if(e.Current == undefined)
 		        return false;
 			do {
 				if(extractor(e.Current) == item)
 					return true;
-			} while(e.MoveNext())
+			} while(e.MoveNext());
 			return false;
 		}
 		
 		public Where(predictate: (item: T) => boolean): Enumerable<T> {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
+
 			var e = this.GetEnumerator();
 			var l = new List<T>();
 			if(e.Current == undefined)
@@ -160,22 +185,63 @@ module Collections {
 			do {
 				if(predictate(e.Current))
 					l.Add(e.Current);
-			} while(e.MoveNext())
+			} while(e.MoveNext());
 			return l;
 		}
 		
 		public Select<TResult>(predictate: (item: T) => TResult): Enumerable<TResult> {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected callback to be of type Function.');
+
 			var e = this.GetEnumerator();
 			var l = new List<TResult>();
 			if(e.Current == undefined)
 		        return l;
 			do {
 				l.Add(predictate(e.Current));
-			} while(e.MoveNext())
+			} while(e.MoveNext());
 			return l;
+		}
+
+		public OrderBy<TKey>(keySelector: (item: T) => TKey, comparer: (leftItem: TKey, rightItem: TKey) => number = null): OrderedEnumerable<T> {
+			if(typeof keySelector !== 'function' && keySelector != null)
+				throw new InvalidArgumentException('Expected keySelector callback to be of type Function.');
+			if(typeof comparer !== 'function' && comparer != null)
+				throw new InvalidArgumentException('Expected comparer callback to be of type Function.');
+
+			var compareFunction;
+			if(keySelector == null){
+				if(comparer == null) {
+					compareFunction = function (a, b) {
+						return +(a > b) || +(a === b) - 1;
+					};
+				}else{
+					compareFunction = comparer;
+				}
+			}else{
+				if(comparer == null)
+					compareFunction = function(a, b){
+						var ax = keySelector(a);
+						var bx = keySelector(b);
+						return +(ax > bx) || +(ax === bx) - 1;
+					};
+				else
+					compareFunction = function(a, b){
+						var ax = keySelector(a);
+						var bx = keySelector(b);
+						return comparer(ax, bx);
+					};
+			}
+			var a: T[] = <any> Enumerable.CopyToArray(<any> this).sort(compareFunction);
+			return new OrderedEnumerable<T>(a);
 		}
 		
 		public GroupBy<TKey, TResult>(keySelector: (item: T) => TKey, resultSelector: (key: TKey, items: IEnumerable<T>) => TResult): Enumerable<TResult> {
+			if(typeof keySelector !== 'function')
+				throw new InvalidArgumentException('Expected keySelector callback to be of type Function.');
+			if(typeof resultSelector !== 'function')
+				throw new InvalidArgumentException('Expected resultSelector callback to be of type Function.');
+
 		    // Map to temporary dictionary
 		    var e = this.GetEnumerator();
 		    var d = new Dictionary<TKey, List<T>>();
@@ -187,7 +253,7 @@ module Collections {
 			        var t = new List<T>();
 			        d.Set(k, t);
 			    }else d.Get(k).Add(e.Current);
-			} while(e.MoveNext())
+			} while(e.MoveNext());
 			// Map to resulting container
 			var l = new List<TResult>();
 			d.Each((item) => l.Add(resultSelector(item.Key, item.Value)));
@@ -219,6 +285,9 @@ module Collections {
 		}
 		
 		public First(predictate?: (item: T) => boolean): T {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected predictate callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(predictate == undefined)
 		        return e.Current;
@@ -232,6 +301,9 @@ module Collections {
 		}
 		
 		public FirstOrDefault(def: T, predictate?: (item: T) => boolean): T {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected predictate callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(predictate == undefined)
 		        return e.Current;
@@ -245,6 +317,9 @@ module Collections {
 		}
 		
 		public Last(predictate?: (item: T) => boolean): T {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected predictate callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(predictate == undefined){
 		        var lastSatisfied = null;
@@ -263,6 +338,9 @@ module Collections {
 		}
 		
 		public LastOrDefault(def: T, predictate?: (item: T) => boolean): T {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected predictate callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(predictate == undefined){
 		        var lastSatisfied = def;
@@ -301,6 +379,9 @@ module Collections {
 		}
 		
 		public IndexOfFirst(predictate: (item: T) => boolean): number {
+			if(typeof predictate !== 'function')
+				throw new InvalidArgumentException('Expected predictate callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(e.Current == undefined)
 		        return -1;
@@ -315,7 +396,20 @@ module Collections {
 		
 		public Min(extractor?: (item: T) => number): T {
 		    var e = this.GetEnumerator();
-		    if(extractor == undefined) {
+		    if(typeof extractor === 'function') {
+				if(e.Current == undefined)
+					return null;
+				var minObj = e.Current;
+				var minNum: number = extractor(e.Current);
+				while(e.MoveNext()) {
+					var num = extractor(e.Current);
+					if(minNum > num){
+						minNum = num;
+						minObj = e.Current;
+					}
+				}
+				return minObj;
+			}else{
 		        if(typeof e.Current == 'number'){
 		            var min = e.Current;
 		            while(e.MoveNext()) {
@@ -323,25 +417,25 @@ module Collections {
 		                    min = e.Current;
 		            }
 		        }else throw new Error('Invalid type given, expected number. Please extract the correct value.');
-		    } else {
-		        if(e.Current == undefined)
-		            return null;
-		        var minObj = e.Current;
-		        var minNum: number = extractor(e.Current);
-	            while(e.MoveNext()) {
-	                var num = extractor(e.Current);
-	                if(minNum > num){
-	                    minNum = num;
-	                    minObj = e.Current;
-	                }
-	            }
-	            return minObj;
 		    }
 		}
 		
 		public Max(extractor?: (item: T) => number): T {
 		    var e = this.GetEnumerator();
-		    if(extractor == undefined) {
+		    if(typeof extractor === 'function') {
+				if (e.Current == undefined)
+					return null;
+				var maxObj = e.Current;
+				var maxNum:number = extractor(e.Current);
+				while (e.MoveNext()) {
+					var num = extractor(e.Current);
+					if (maxNum < num) {
+						maxNum = num;
+						maxObj = e.Current;
+					}
+				}
+				return maxObj;
+			}else{
 		        if(typeof e.Current == 'number'){
 		            var max = e.Current;
 		            while(e.MoveNext()) {
@@ -349,19 +443,6 @@ module Collections {
 		                    max = e.Current;
 		            }
 		        }else throw new Error('Invalid type given, expected number. Please extract the correct value.');
-		    } else {
-		        if(e.Current == undefined)
-		            return null;
-		        var maxObj = e.Current;
-		        var maxNum: number = extractor(e.Current);
-	            while(e.MoveNext()) {
-	                var num = extractor(e.Current);
-	                if(maxNum < num){
-	                    maxNum = num;
-	                    maxObj = e.Current;
-	                }
-	            }
-	            return maxObj;
 		    }
 		}
 		
@@ -406,6 +487,11 @@ module Collections {
 		}
 		
 		public ToDictionary<TKey, TValue>(keyExtractor: (item: T) => TKey, valueExtractor: (item: T) => TValue, dict?: IDictionary<TKey, TValue>): IDictionary<TKey, TValue> {
+			if(typeof keyExtractor !== 'function')
+				throw new InvalidArgumentException('Expected keyExtractor callback to be of type Function.');
+			if(typeof valueExtractor !== 'function')
+				throw new InvalidArgumentException('Expected valueExtractor callback to be of type Function.');
+
 		    var e = this.GetEnumerator();
 		    if(dict == undefined)
 			    var dict: IDictionary<TKey, TValue> = new Dictionary<TKey, TValue>();
@@ -431,7 +517,7 @@ module Collections {
 		
 		GetEnumerator(): IEnumerator<T> { throw new Error('This method is abstract, and should therefore be overridden by the extending class.'); }
 	}
-	
+
 	export interface ICollection<T> extends IEnumerable<T> {
 		RemoveAll(predictate: (item: T) => boolean): number;
 		RemoveFirst(predictate: (item: T) => boolean): void;
@@ -478,6 +564,21 @@ module Collections {
 		            return;
 		        }
 		    } while(e.MoveNext());
+		}
+	}
+
+	export interface IOrderedEnumerable<T> extends IEnumerable<T> {	}
+	export class OrderedEnumerable<T> extends Enumerable<T> implements IOrderedEnumerable<T> {
+		get Count(): number { return this.Items.length;	}
+
+		public constructor(private Items: T[]){	super(); }
+
+		public GetEnumerator(): IEnumerator<T> {
+			return new SimpleEnumerator<T>(this.Items);
+		}
+
+		public GetNative(): any {
+			return this.Items;
 		}
 	}
 }

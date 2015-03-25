@@ -103,11 +103,10 @@ module Panels {
              * Check if a panel is visible or not.
              */
             public IsVisible(ref: Panels.PanelReference): boolean{
-                return
-                    this.References.FirstOrDefault(
-                        { Reference: null, Visible: null },
-                        x => x.Reference.Equals(ref)
-                    ).Visible;
+                return this.References.FirstOrDefault(
+					{ Reference: null, Visible: null },
+					x => x.Reference.Equals(ref)
+				).Visible;
             }
             
             public SetVisibility(ref: Panels.PanelReference, visibility: boolean): void {
@@ -139,7 +138,7 @@ module Panels {
              * Iterate over all panels in the dictionary returning an array with the corrected order and how each reference was mutated.
              * @return <Panel, Direction of animation, Places Moved, oldVisibility> 
              */
-            public TrackChanges(callback: () => void, animationDirectionCallback: (stateChange: Panels.Viewport.PanelViewportStateChange) => void): Collections.Enumerable<Panels.Viewport.PanelViewportStateChange> {
+            public TrackChanges(callback: () => void, animationDirectionCallback: (stateChange: Panels.Viewport.PanelViewportStateChange) => void = null): Collections.Enumerable<Panels.Viewport.PanelViewportStateChange> {
                 // Make a snapshot of the current situation
                 var before: Collections.Enumerable<Panels.Viewport.PanelViewportState> = this.GetCurrentState();
                 
@@ -168,8 +167,8 @@ module Panels {
                         PreviousPosition: previousState.Position,
                         PreviousVisibility: previousState.Visibility,
                         
-                        Moves: previousState.Position - newPosition,
-                        MovementDirection: ((newPosition > previousState.Position) ? Panels.Viewport.Direction.Forward : Panels.Viewport.Direction.Backward),
+                        //Moves: previousState.Position - newPosition,
+                        //MovementDirection: ((newPosition > previousState.Position) ? Panels.Viewport.Direction.Forward : Panels.Viewport.Direction.Backward),
                         AnimationDirection: null
                     };
                     

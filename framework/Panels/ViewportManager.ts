@@ -38,20 +38,18 @@ module Panels {
             PreviousPosition: number;
             
             /**
-             * The difference between the current position and old position.
-             */
-            Moves: number;
-            
-            /**
-             * Direction in which the panel moves. (or null when Moves=0)
-             */
-            MovementDirection: Direction;
-            
-            /**
-             * (Optional) The direction in which the element has to be animated (Only filled if the ViewportManager provided an animationDirectionCallback)
+             * (Optional) The direction in which the element has to be animated.
              */
             AnimationDirection: Side;
         }
+
+		/**
+		 * Defines the orientation of an axisbound operation.
+		 */
+		export enum Orientation {
+			Horizontal,
+			Vertical
+		}
         
         /**
          * Defines the side towards which a Direction is aimed.
@@ -59,14 +57,10 @@ module Panels {
         export enum Side {
             Left, Right, Top, Down
         }
-        
-        /**
-         * Defines what direction a movement is going.
-         */
-        export enum Direction {
-            Forward, Backward, Sidewards
-        }
-        
+
+		export class ViewportException extends RuntimeException {}
+		export class InvalidViewportArrangementException extends ViewportException {}
+
         /**
          * Viewport Manager Interface
          */
@@ -82,28 +76,38 @@ module Panels {
             Attach(ref: Panels.PanelReference): void;
             /**
              * Detach a Panel from the ViewportManager, making sure that it is restored in it's default state (Display value etc.)
+			 *
+			 * Behaviour:
+			 *  - Detaching a panel is only possible if it is not currently visible in/placed inside the viewport. Otherwise the method should raise a ViewportException.
+			 * @param ref The reference to detach.
              */
             Detach(ref: Panels.PanelReference): void;
             /**
              * Check whether this Viewportmanager manages/knows this panel.
              */
             IsAttached(ref: Panels.PanelReference): boolean;
+			/**
+			 * Whether or not the given panel is attached to this manager and is visible in the viewport.
+			 * @param ref Reference to check.
+			 */
+			IsVisible(ref: Panels.PanelReference): boolean;
             
             /**
              * Arrange the given panels in the viewport.
+			 *
+			 * The given arrangement *should* include _every panel that is in the viewport_ even if only
+			 *
+			 * Behaviour:
+			 *  - The ViewportManager *should* raise an InvalidViewportArrangementException when the arrangement does not include every panel from the previous/current viewport arrangement.
+			 * @param arrangement The panels and their position and visibility in the viewport.
              */
-            Arrange(arrangement: Collections.Enumerable<PanelViewportStateChange>): void;
-            
-            /**
-             * Arrange the panels in the viewport for the first render of the panelgroup.
+            Arrange(arrangement: Collections.Enumerable<PanelViewportStateChange>, doneCallback): void;
+
+			/**
+             * Arrange the given panels in the viewport for the initial panel setup.
+			 * @param arrangement The panels and their position and visibility in the viewport.
              */
             ArrangeInitial(arrangement: Collections.Enumerable<PanelViewportState>): void;
-            
-            /**
-             * If the ViewportManager wants to know/relies on the AnimationPanelViewportState.AnimationDirection property, this method should return an callback that can process each element for the animation direction.
-             * @return function|null
-             */
-            GetAnimationDirectionProvider(): (stateChange: PanelViewportStateChange) => Direction;
         }
     }
 }

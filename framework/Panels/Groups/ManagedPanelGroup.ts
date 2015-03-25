@@ -1,5 +1,6 @@
 /// <reference path="../ViewportManager.ts" />
 /// <reference path="../PanelGroup.ts" />
+/// <reference path="../../Events/_include.ts" />
 /// <reference path="../Utils/ReferenceManager.ts" />
 
 module Panels {
@@ -36,9 +37,7 @@ module Panels {
                     this._rendered = true;
                     // show all if default visible
                     if(this._defaultVisibility == true){
-                        this._viewport.ArrangeInitial(
-                            this.References.GetCurrentState()
-                        );
+                        this._viewport.ArrangeInitial(this.References.GetCurrentState());
                     }
                 }
                 this.References.GetVisible().Each(x => x.Panel.Render());
@@ -133,7 +132,7 @@ module Panels {
                         this._viewport.Arrange(
                             this.References.TrackChanges(() => {
                                 this.References.SetVisibility(ref, true);
-                            }, this._viewport.GetAnimationDirectionProvider())
+                            })
                         );
                     }else{
                         this.References.SetVisibility(ref, true);
@@ -163,7 +162,7 @@ module Panels {
                         this._viewport.Arrange(
                             this.References.TrackChanges(() => {
                                 this.References.SetVisibility(ref, false);
-                            }, this._viewport.GetAnimationDirectionProvider())
+                            })
                         );
                     }else{
                         this.References.SetVisibility(ref, false);
@@ -215,7 +214,7 @@ module Panels {
                             else
                                 throw new KeyNotFoundException();
                         }
-                    }, this._viewport.GetAnimationDirectionProvider());
+                    });
                 
                 // Only apply the animations when the panel is already rendered.
                 if(this._rendered){

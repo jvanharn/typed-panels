@@ -1,4 +1,5 @@
 /// <reference path="../../defs/jquery.d.ts" />
+/// <reference path="../Exceptions.ts" />
 /// <reference path="Groups/StackingPanelGroup.ts" />
 /// <reference path="panel.ts" />
 /// <reference path="panelgroup.ts" />

@@ -4,7 +4,9 @@ module Panels {
          * Panel group that supports compositing 
          */
         export class ComposablePanelGroup<TViewportManager extends Panels.Viewport.ICompositeViewportManager> extends ManagedPanelGroup<TViewportManager, ComposablePanelGroup<TViewportManager>> {
-            public Compose(composition: Panels.Viewport.IViewportComposition): void {
+
+
+			public Compose(composition: Panels.Viewport.IViewportComposition): void {
                 
             }
         }
