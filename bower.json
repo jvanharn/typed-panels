@@ -1,7 +1,7 @@
 {
   "name": "typed-panels",
   "version": "0.0.2",
-  "authors": [ "Jeffrey van Harn <jeffrey.wizkid@gmail.com>" ],
+  "authors": [ "Jeffrey van Harn <jeffrey@lessthanthree.nl>" ],
   "description": "UI Framework based on TypeScript that begins at the user interface and ends at the models.",
   "main": "dist/typed.js",
   "license": "MIT",
